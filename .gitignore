@@ -1,0 +1,37 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# EF Core Migrations (giữ lại migrations nhưng ignore snapshot nếu muốn)
+# Migrations/
+
+# User-specific files
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# macOS
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Environment
+appsettings.Development.json
+.env
+.env.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
