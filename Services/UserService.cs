@@ -94,7 +94,7 @@ namespace JapaneseTrainer.Api.Services
             return new UserDto
             {
                 Id = user.Id,
-                Username = user.Username,
+                Username = user.Username ?? string.Empty,
                 Email = user.Email,
                 Role = user.Role.ToString(),
                 IsActive = user.IsActive,

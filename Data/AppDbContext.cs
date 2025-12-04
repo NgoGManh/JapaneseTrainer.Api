@@ -11,8 +11,11 @@ namespace JapaneseTrainer.Api.Data
         }
 
         public DbSet<User> Users => Set<User>();
-
-        // TODO: DbSet<Item>, DbSet<Package>, ...
+        public DbSet<Item> Items => Set<Item>();
+        public DbSet<DictionaryEntry> DictionaryEntries => Set<DictionaryEntry>();
+        public DbSet<Kanji> Kanjis => Set<Kanji>();
+        public DbSet<ExampleSentence> ExampleSentences => Set<ExampleSentence>();
+        public DbSet<Audio> Audios => Set<Audio>();
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
