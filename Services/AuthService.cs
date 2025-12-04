@@ -26,6 +26,7 @@ namespace JapaneseTrainer.Api.Services
             var user = new User
             {
                 Id = Guid.NewGuid(),
+                Username = request.Username,
                 Email = request.Email,
                 PasswordHash = HashPassword(request.Password),
                 Role = UserRole.User,

@@ -2,8 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.OpenApi.Models;
 using JapaneseTrainer.Api.Data;
 using JapaneseTrainer.Api.Repositories;
 using JapaneseTrainer.Api.Services;
@@ -23,7 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Controllers
 builder.Services.AddControllers();
 
-// Swagger + định nghĩa Bearer auth (sử dụng Microsoft.OpenApi 2.x)
+// Swagger + định nghĩa Bearer auth
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -42,16 +41,28 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.\n\nExample: \"Bearer 12345abcdef\"",
+        Description = "JWT Authorization header using the Bearer scheme.\n\nExample: \"12345abcdef\"",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT"
     });
 
     // Yêu cầu Bearer token cho tất cả endpoints (trừ những endpoint có [AllowAnonymous])
-    // Note: Security requirement được xử lý tự động bởi Swashbuckle khi có [Authorize]
-    // Có thể thêm manual nếu cần, nhưng với Microsoft.OpenApi 2.x thì cần dùng cách khác
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 
     // Enable XML comments nếu có
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
