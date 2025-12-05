@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: jt-sql
+    environment:
+      - ACCEPT_EULA=1
+      - MSSQL_SA_PASSWORD=Mssql@2025
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  api:
+    build: .
+    container_name: jt-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=JapaneseTrainerDb;User Id=sa;Password=Mssql@2025;TrustServerCertificate=True;
+      - Jwt__Issuer=JapaneseTrainer
+      - Jwt__Audience=JapaneseTrainerClient
+      - Jwt__SecretKey=CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+volumes:
+  sql_data:

@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/Migrations/
+Dockerfile
+docker-compose.yml
+*.user
+*.csproj.user
+*.suo
+*.tmp
+*.log
