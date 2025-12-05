@@ -17,6 +17,9 @@ namespace JapaneseTrainer.Api.Data
         public DbSet<ExampleSentence> ExampleSentences => Set<ExampleSentence>();
         public DbSet<Audio> Audios => Set<Audio>();
 
+        public DbSet<GrammarMaster> GrammarMasters => Set<GrammarMaster>();
+        public DbSet<GrammarPackage> GrammarPackages => Set<GrammarPackage>();
+
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var entries = ChangeTracker.Entries<AuditableEntity>();

@@ -1,3 +1,4 @@
+using AutoMapper;
 using JapaneseTrainer.Api.DTOs.Dictionary;
 using JapaneseTrainer.Api.Models;
 using JapaneseTrainer.Api.Repositories;
@@ -7,23 +8,25 @@ namespace JapaneseTrainer.Api.Services
     public class DictionaryService : IDictionaryService
     {
         private readonly IDictionaryRepository _repository;
+        private readonly IMapper _mapper;
 
-        public DictionaryService(IDictionaryRepository repository)
+        public DictionaryService(IDictionaryRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         // Item methods
         public async Task<List<ItemDto>> GetItemsAsync(string? search, string? type, CancellationToken cancellationToken = default)
         {
             var items = await _repository.GetItemsAsync(search, type, cancellationToken);
-            return items.Select(MapToItemDto).ToList();
+            return _mapper.Map<List<ItemDto>>(items);
         }
 
         public async Task<ItemDto?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var item = await _repository.GetItemByIdAsync(id, cancellationToken);
-            return item == null ? null : MapToItemDto(item);
+            return item == null ? null : _mapper.Map<ItemDto>(item);
         }
 
         public async Task<ItemDto> CreateItemAsync(CreateItemRequest request, CancellationToken cancellationToken = default)
@@ -43,7 +46,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.AddItemAsync(item, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToItemDto(item);
+            return _mapper.Map<ItemDto>(item);
         }
 
         public async Task<ItemDto?> UpdateItemAsync(Guid id, CreateItemRequest request, CancellationToken cancellationToken = default)
@@ -65,7 +68,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.UpdateItemAsync(item, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToItemDto(item);
+            return _mapper.Map<ItemDto>(item);
         }
 
         public async Task<bool> DeleteItemAsync(Guid id, CancellationToken cancellationToken = default)
@@ -85,13 +88,13 @@ namespace JapaneseTrainer.Api.Services
         public async Task<List<DictionaryEntryDto>> GetDictionaryEntriesAsync(string? search, string? jlptLevel, Guid? kanjiId, CancellationToken cancellationToken = default)
         {
             var entries = await _repository.GetDictionaryEntriesAsync(search, jlptLevel, kanjiId, cancellationToken);
-            return entries.Select(MapToDictionaryEntryDto).ToList();
+            return _mapper.Map<List<DictionaryEntryDto>>(entries);
         }
 
         public async Task<DictionaryEntryDto?> GetDictionaryEntryByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var entry = await _repository.GetDictionaryEntryByIdAsync(id, cancellationToken);
-            return entry == null ? null : MapToDictionaryEntryDto(entry);
+            return entry == null ? null : _mapper.Map<DictionaryEntryDto>(entry);
         }
 
         public async Task<DictionaryEntryDto> CreateDictionaryEntryAsync(CreateDictionaryEntryRequest request, CancellationToken cancellationToken = default)
@@ -113,7 +116,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.AddDictionaryEntryAsync(entry, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToDictionaryEntryDto(entry);
+            return _mapper.Map<DictionaryEntryDto>(entry);
         }
 
         public async Task<DictionaryEntryDto?> UpdateDictionaryEntryAsync(Guid id, CreateDictionaryEntryRequest request, CancellationToken cancellationToken = default)
@@ -137,7 +140,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.UpdateDictionaryEntryAsync(entry, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToDictionaryEntryDto(entry);
+            return _mapper.Map<DictionaryEntryDto>(entry);
         }
 
         public async Task<bool> DeleteDictionaryEntryAsync(Guid id, CancellationToken cancellationToken = default)
@@ -157,13 +160,13 @@ namespace JapaneseTrainer.Api.Services
         public async Task<List<KanjiDto>> GetKanjisAsync(string? search, string? level, CancellationToken cancellationToken = default)
         {
             var kanjis = await _repository.GetKanjisAsync(search, level, cancellationToken);
-            return kanjis.Select(MapToKanjiDto).ToList();
+            return _mapper.Map<List<KanjiDto>>(kanjis);
         }
 
         public async Task<KanjiDto?> GetKanjiByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var kanji = await _repository.GetKanjiByIdAsync(id, cancellationToken);
-            return kanji == null ? null : MapToKanjiDto(kanji);
+            return kanji == null ? null : _mapper.Map<KanjiDto>(kanji);
         }
 
         public async Task<KanjiDto> CreateKanjiAsync(CreateKanjiRequest request, CancellationToken cancellationToken = default)
@@ -183,7 +186,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.AddKanjiAsync(kanji, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToKanjiDto(kanji);
+            return _mapper.Map<KanjiDto>(kanji);
         }
 
         public async Task<KanjiDto?> UpdateKanjiAsync(Guid id, CreateKanjiRequest request, CancellationToken cancellationToken = default)
@@ -205,7 +208,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.UpdateKanjiAsync(kanji, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToKanjiDto(kanji);
+            return _mapper.Map<KanjiDto>(kanji);
         }
 
         public async Task<bool> DeleteKanjiAsync(Guid id, CancellationToken cancellationToken = default)
@@ -225,13 +228,13 @@ namespace JapaneseTrainer.Api.Services
         public async Task<List<ExampleSentenceDto>> GetExampleSentencesAsync(Guid? itemId, Guid? dictionaryEntryId, CancellationToken cancellationToken = default)
         {
             var examples = await _repository.GetExampleSentencesAsync(itemId, dictionaryEntryId, cancellationToken);
-            return examples.Select(MapToExampleSentenceDto).ToList();
+            return _mapper.Map<List<ExampleSentenceDto>>(examples);
         }
 
         public async Task<ExampleSentenceDto?> GetExampleSentenceByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var example = await _repository.GetExampleSentenceByIdAsync(id, cancellationToken);
-            return example == null ? null : MapToExampleSentenceDto(example);
+            return example == null ? null : _mapper.Map<ExampleSentenceDto>(example);
         }
 
         public async Task<ExampleSentenceDto> CreateExampleSentenceAsync(CreateExampleSentenceRequest request, CancellationToken cancellationToken = default)
@@ -251,7 +254,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.AddExampleSentenceAsync(example, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToExampleSentenceDto(example);
+            return _mapper.Map<ExampleSentenceDto>(example);
         }
 
         public async Task<ExampleSentenceDto?> UpdateExampleSentenceAsync(Guid id, CreateExampleSentenceRequest request, CancellationToken cancellationToken = default)
@@ -273,7 +276,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.UpdateExampleSentenceAsync(example, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToExampleSentenceDto(example);
+            return _mapper.Map<ExampleSentenceDto>(example);
         }
 
         public async Task<bool> DeleteExampleSentenceAsync(Guid id, CancellationToken cancellationToken = default)
@@ -293,13 +296,13 @@ namespace JapaneseTrainer.Api.Services
         public async Task<List<AudioDto>> GetAudiosAsync(Guid? itemId, Guid? dictionaryEntryId, CancellationToken cancellationToken = default)
         {
             var audios = await _repository.GetAudiosAsync(itemId, dictionaryEntryId, cancellationToken);
-            return audios.Select(MapToAudioDto).ToList();
+            return _mapper.Map<List<AudioDto>>(audios);
         }
 
         public async Task<AudioDto?> GetAudioByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var audio = await _repository.GetAudioByIdAsync(id, cancellationToken);
-            return audio == null ? null : MapToAudioDto(audio);
+            return audio == null ? null : _mapper.Map<AudioDto>(audio);
         }
 
         public async Task<AudioDto> CreateAudioAsync(CreateAudioRequest request, CancellationToken cancellationToken = default)
@@ -317,7 +320,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.AddAudioAsync(audio, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToAudioDto(audio);
+            return _mapper.Map<AudioDto>(audio);
         }
 
         public async Task<AudioDto?> UpdateAudioAsync(Guid id, CreateAudioRequest request, CancellationToken cancellationToken = default)
@@ -337,7 +340,7 @@ namespace JapaneseTrainer.Api.Services
             await _repository.UpdateAudioAsync(audio, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
 
-            return MapToAudioDto(audio);
+            return _mapper.Map<AudioDto>(audio);
         }
 
         public async Task<bool> DeleteAudioAsync(Guid id, CancellationToken cancellationToken = default)
@@ -353,86 +356,6 @@ namespace JapaneseTrainer.Api.Services
             return true;
         }
 
-        // Mapping methods
-        private static ItemDto MapToItemDto(Item item)
-        {
-            return new ItemDto
-            {
-                Id = item.Id,
-                Japanese = item.Japanese,
-                Reading = item.Reading,
-                Romaji = item.Romaji,
-                Meaning = item.Meaning,
-                Type = item.Type,
-                HashKey = item.HashKey,
-                CreatedAt = item.CreatedAt,
-                UpdatedAt = item.UpdatedAt
-            };
-        }
-
-        private static DictionaryEntryDto MapToDictionaryEntryDto(DictionaryEntry entry)
-        {
-            return new DictionaryEntryDto
-            {
-                Id = entry.Id,
-                Japanese = entry.Japanese,
-                Reading = entry.Reading,
-                Romaji = entry.Romaji,
-                Meaning = entry.Meaning,
-                PartOfSpeech = entry.PartOfSpeech,
-                JlptLevel = entry.JlptLevel,
-                KanjiId = entry.KanjiId,
-                ItemId = entry.ItemId,
-                CreatedAt = entry.CreatedAt,
-                UpdatedAt = entry.UpdatedAt
-            };
-        }
-
-        private static KanjiDto MapToKanjiDto(Kanji kanji)
-        {
-            return new KanjiDto
-            {
-                Id = kanji.Id,
-                Character = kanji.Character,
-                Meaning = kanji.Meaning,
-                Onyomi = kanji.Onyomi,
-                Kunyomi = kanji.Kunyomi,
-                Strokes = kanji.Strokes,
-                Level = kanji.Level,
-                CreatedAt = kanji.CreatedAt,
-                UpdatedAt = kanji.UpdatedAt
-            };
-        }
-
-        private static ExampleSentenceDto MapToExampleSentenceDto(ExampleSentence example)
-        {
-            return new ExampleSentenceDto
-            {
-                Id = example.Id,
-                Japanese = example.Japanese,
-                Reading = example.Reading,
-                Romaji = example.Romaji,
-                Meaning = example.Meaning,
-                ItemId = example.ItemId,
-                DictionaryEntryId = example.DictionaryEntryId,
-                CreatedAt = example.CreatedAt,
-                UpdatedAt = example.UpdatedAt
-            };
-        }
-
-        private static AudioDto MapToAudioDto(Audio audio)
-        {
-            return new AudioDto
-            {
-                Id = audio.Id,
-                Url = audio.Url,
-                Type = audio.Type,
-                ItemId = audio.ItemId,
-                DictionaryEntryId = audio.DictionaryEntryId,
-                CreatedAt = audio.CreatedAt,
-                UpdatedAt = audio.UpdatedAt
-            };
-        }
     }
 }
 

@@ -11,8 +11,8 @@ namespace JapaneseTrainer.Api.Services
             bool? isActive = null,
             CancellationToken cancellationToken = default);
         Task<UserDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<bool> SetRoleAsync(Guid id, string role, CancellationToken cancellationToken = default);
         Task<bool> SetActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }
 

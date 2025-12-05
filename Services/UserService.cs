@@ -1,3 +1,4 @@
+using AutoMapper;
 using JapaneseTrainer.Api.DTOs.Users;
 using JapaneseTrainer.Api.Models;
 using JapaneseTrainer.Api.Repositories;
@@ -7,10 +8,12 @@ namespace JapaneseTrainer.Api.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<List<UserDto>> GetAllAsync(
@@ -44,35 +47,15 @@ namespace JapaneseTrainer.Api.Services
                 query = query.Where(u => u.IsActive == isActive.Value);
             }
 
-            return query
+            return _mapper.Map<List<UserDto>>(query
                 .OrderByDescending(u => u.CreatedAt)
-                .Select(MapToDto)
-                .ToList();
+                .ToList());
         }
 
         public async Task<UserDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-            return user == null ? null : MapToDto(user);
-        }
-
-        public async Task<bool> SetRoleAsync(Guid id, string role, CancellationToken cancellationToken = default)
-        {
-            var user = await _userRepository.GetByIdAsync(id, cancellationToken);
-            if (user == null)
-            {
-                return false;
-            }
-
-            if (!Enum.TryParse<UserRole>(role, true, out var parsedRole))
-            {
-                return false;
-            }
-
-            user.Role = parsedRole;
-            await _userRepository.UpdateAsync(user, cancellationToken);
-            await _userRepository.SaveChangesAsync(cancellationToken);
-            return true;
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
         public async Task<bool> SetActiveAsync(Guid id, bool isActive, CancellationToken cancellationToken = default)
@@ -89,17 +72,17 @@ namespace JapaneseTrainer.Api.Services
             return true;
         }
 
-        private static UserDto MapToDto(User user)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return new UserDto
+            var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+            if (user == null)
             {
-                Id = user.Id,
-                Username = user.Username ?? string.Empty,
-                Email = user.Email,
-                Role = user.Role.ToString(),
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt
-            };
+                return false;
+            }
+
+            await _userRepository.DeleteAsync(user, cancellationToken);
+            await _userRepository.SaveChangesAsync(cancellationToken);
+            return true;
         }
     }
 }

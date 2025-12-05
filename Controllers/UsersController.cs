@@ -74,38 +74,6 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         /// <summary>
-        /// Update user role
-        /// </summary>
-        /// <param name="id">User ID (GUID)</param>
-        /// <param name="request">Role update request</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>No content on success</returns>
-        [HttpPost("{id:guid}/role")]
-        [SwaggerOperation(
-            Summary = "Update user role",
-            Description = "Updates the role of a specific user. Role must be either 'User' or 'Admin'. Requires Admin role."
-        )]
-        [SwaggerResponse(204, "Role updated successfully")]
-        [SwaggerResponse(400, "Invalid user or role")]
-        [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
-        [SwaggerResponse(403, "Forbidden - Admin role required")]
-        [SwaggerResponse(404, "User not found")]
-        [SwaggerResponse(422, "Validation error")]
-        public async Task<IActionResult> SetRole(
-            Guid id, 
-            [FromBody] SetRoleRequest request, 
-            CancellationToken cancellationToken)
-        {
-            var ok = await _userService.SetRoleAsync(id, request.Role, cancellationToken);
-            if (!ok)
-            {
-                return BadRequest(new { message = "Invalid user or role" });
-            }
-
-            return NoContent();
-        }
-
-        /// <summary>
         /// Update user active status
         /// </summary>
         /// <param name="id">User ID (GUID)</param>
@@ -132,6 +100,32 @@ namespace JapaneseTrainer.Api.Controllers
             if (!ok)
             {
                 return BadRequest(new { message = "Invalid user" });
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete a user
+        /// </summary>
+        /// <param name="id">User ID (GUID)</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>No content on success</returns>
+        [HttpDelete("{id:guid}")]
+        [SwaggerOperation(
+            Summary = "Delete a user",
+            Description = "Permanently deletes a user account. This action cannot be undone. Requires Admin role."
+        )]
+        [SwaggerResponse(204, "User deleted successfully")]
+        [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
+        [SwaggerResponse(403, "Forbidden - Admin role required")]
+        [SwaggerResponse(404, "User not found")]
+        public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
+        {
+            var deleted = await _userService.DeleteAsync(id, cancellationToken);
+            if (!deleted)
+            {
+                return NotFound();
             }
 
             return NoContent();

@@ -46,6 +46,12 @@ namespace JapaneseTrainer.Api.Repositories
             return Task.CompletedTask;
         }
 
+        public Task DeleteAsync(User user, CancellationToken cancellationToken = default)
+        {
+            _context.Users.Remove(user);
+            return Task.CompletedTask;
+        }
+
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return _context.SaveChangesAsync(cancellationToken);

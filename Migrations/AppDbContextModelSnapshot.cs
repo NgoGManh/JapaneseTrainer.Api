@@ -17,7 +17,7 @@ namespace JapaneseTrainer.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -174,6 +174,97 @@ namespace JapaneseTrainer.Api.Migrations
                     b.HasIndex("ItemId");
 
                     b.ToTable("ExampleSentences");
+                });
+
+            modelBuilder.Entity("JapaneseTrainer.Api.Models.GrammarMaster", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Example")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Formation")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Level")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Meaning")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Usage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GrammarMasters");
+                });
+
+            modelBuilder.Entity("JapaneseTrainer.Api.Models.GrammarPackage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("GrammarMasterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrammarMasterId");
+
+                    b.ToTable("GrammarPackages");
                 });
 
             modelBuilder.Entity("JapaneseTrainer.Api.Models.Item", b =>
@@ -358,6 +449,22 @@ namespace JapaneseTrainer.Api.Migrations
                     b.Navigation("DictionaryEntry");
 
                     b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("JapaneseTrainer.Api.Models.GrammarPackage", b =>
+                {
+                    b.HasOne("JapaneseTrainer.Api.Models.GrammarMaster", "GrammarMaster")
+                        .WithMany("GrammarPackages")
+                        .HasForeignKey("GrammarMasterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GrammarMaster");
+                });
+
+            modelBuilder.Entity("JapaneseTrainer.Api.Models.GrammarMaster", b =>
+                {
+                    b.Navigation("GrammarPackages");
                 });
 
             modelBuilder.Entity("JapaneseTrainer.Api.Models.Item", b =>

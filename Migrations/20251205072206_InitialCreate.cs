@@ -6,11 +6,33 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JapaneseTrainer.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateModels : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "GrammarMasters",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Meaning = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Formation = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Usage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Example = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Level = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Tags = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GrammarMasters", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Items",
                 columns: table => new
@@ -51,6 +73,51 @@ namespace JapaneseTrainer.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Kanjis", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GrammarPackages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GrammarMasterId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PackageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CustomTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GrammarPackages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GrammarPackages_GrammarMasters_GrammarMasterId",
+                        column: x => x.GrammarMasterId,
+                        principalTable: "GrammarMasters",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -177,6 +244,11 @@ namespace JapaneseTrainer.Api.Migrations
                 name: "IX_ExampleSentences_ItemId",
                 table: "ExampleSentences",
                 column: "ItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GrammarPackages_GrammarMasterId",
+                table: "GrammarPackages",
+                column: "GrammarMasterId");
         }
 
         /// <inheritdoc />
@@ -189,7 +261,16 @@ namespace JapaneseTrainer.Api.Migrations
                 name: "ExampleSentences");
 
             migrationBuilder.DropTable(
+                name: "GrammarPackages");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
                 name: "DictionaryEntries");
+
+            migrationBuilder.DropTable(
+                name: "GrammarMasters");
 
             migrationBuilder.DropTable(
                 name: "Items");

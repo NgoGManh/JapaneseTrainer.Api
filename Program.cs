@@ -105,8 +105,10 @@ builder.Services.AddScoped<IDictionaryRepository, DictionaryRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IDictionaryService, DictionaryService>();
+builder.Services.AddScoped<IGrammarService, GrammarService>();
 builder.Services.AddSingleton<JwtTokenGenerator>();
 builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 var app = builder.Build();
 
