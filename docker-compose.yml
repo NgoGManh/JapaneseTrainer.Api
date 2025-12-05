@@ -3,6 +3,7 @@ version: "3.9"
 services:
   db:
     image: mcr.microsoft.com/azure-sql-edge:latest
+    platform: linux/amd64
     container_name: jt-sql
     environment:
       - ACCEPT_EULA=1
