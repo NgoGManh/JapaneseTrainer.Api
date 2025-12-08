@@ -126,13 +126,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
+// Always expose Swagger for now (dev/testing). Remove or protect in production as needed.
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
