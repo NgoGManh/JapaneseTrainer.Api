@@ -12,6 +12,12 @@ services:
       - "1433:1433"
     volumes:
       - sql_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Mssql@2025 -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   api:
     build: .
@@ -24,7 +30,8 @@ services:
       - Jwt__Audience=JapaneseTrainerClient
       - Jwt__SecretKey=CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
 
