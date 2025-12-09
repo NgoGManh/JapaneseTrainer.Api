@@ -128,7 +128,11 @@ using (var scope = app.Services.CreateScope())
 // Middleware
 // Always expose Swagger for now (dev/testing). Remove or protect in production as needed.
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "JapaneseTrainer API V1");
+    c.RoutePrefix = "swagger"; 
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
