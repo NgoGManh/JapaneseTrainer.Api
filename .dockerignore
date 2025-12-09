@@ -2,7 +2,6 @@
 **/obj/
 **/.vs/
 **/.git/
-**/Migrations/
 Dockerfile
 docker-compose.yml
 *.user
