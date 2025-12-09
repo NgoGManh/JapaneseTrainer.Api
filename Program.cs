@@ -116,15 +116,6 @@ builder.Services.AddSingleton<JwtTokenGenerator>();
 builder.Services.AddScoped<IDatabaseInitializer, DatabaseInitializer>();
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-var app = builder.Build();
-
-// Đảm bảo database & bảng được tạo tự động khi khởi động
-using (var scope = app.Services.CreateScope())
-{
-    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
-    await initializer.EnsureCreatedAsync();
-}
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -134,6 +125,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Đảm bảo database & bảng được tạo tự động khi khởi động
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+    await initializer.EnsureCreatedAsync();
+}
 
 // Middleware
 // Always expose Swagger for now (dev/testing). Remove or protect in production as needed.
