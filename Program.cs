@@ -125,8 +125,19 @@ using (var scope = app.Services.CreateScope())
     await initializer.EnsureCreatedAsync();
 }
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        b => b.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+
+var app = builder.Build();
+
 // Middleware
 // Always expose Swagger for now (dev/testing). Remove or protect in production as needed.
+app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
