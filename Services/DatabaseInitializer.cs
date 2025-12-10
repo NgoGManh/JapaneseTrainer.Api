@@ -5,6 +5,7 @@ using JapaneseTrainer.Api.Data.Seeds;
 using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
 using JapaneseTrainer.Api.Models.Import;
+using System.IO.Compression;
 using System.Text.Json;
 
 namespace JapaneseTrainer.Api.Services
@@ -56,19 +57,52 @@ namespace JapaneseTrainer.Api.Services
                 return;
             }
 
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Seeds", "jmdict-eng-3.6.1.json");
-            if (!File.Exists(path))
+            var seedsDir = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Seeds");
+            var zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json.zip");
+            if (!File.Exists(zipPath))
             {
-                _logger.LogWarning("JMdict seed file not found at {Path}. Skipping seed.", path);
+                // fallback tên đơn giản hơn nếu file đổi tên
+                zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json.zip");
+            }
+
+            var jsonPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json");
+
+            if (!File.Exists(zipPath) && !File.Exists(jsonPath))
+            {
+                _logger.LogWarning("JMdict seed file not found. Checked: {ZipPath} and {JsonPath}", zipPath, jsonPath);
                 return;
             }
 
-            _logger.LogInformation("Starting JMdict seed from {Path}...", path);
+            var useZip = File.Exists(zipPath);
+            _logger.LogInformation("Starting JMdict seed from {Path}...", useZip ? zipPath : jsonPath);
 
             try
             {
-                // Đọc JSON stream (tối ưu bộ nhớ cho file lớn)
-                using var stream = File.OpenRead(path);
+                Stream dataStream;
+                if (useZip)
+                {
+                    using var archive = ZipFile.OpenRead(zipPath);
+                    var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+                    if (entry == null)
+                    {
+                        _logger.LogWarning("No JSON entry found inside zip {ZipPath}", zipPath);
+                        return;
+                    }
+
+                    // Copy stream to memory so we can keep it after disposing archive
+                    using var zipEntryStream = entry.Open();
+                    var memory = new MemoryStream();
+                    await zipEntryStream.CopyToAsync(memory, cancellationToken);
+                    memory.Position = 0;
+                    dataStream = memory;
+                }
+                else
+                {
+                    dataStream = File.OpenRead(jsonPath);
+                }
+
+                await using var stream = dataStream;
+
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = false,
