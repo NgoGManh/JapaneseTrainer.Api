@@ -65,7 +65,7 @@ namespace JapaneseTrainer.Api.Services
                 zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1+20251208123023.json.zip");
             }
 
-            var jsonPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1+20251208123023.json");
+            var jsonPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json");
 
             if (!File.Exists(zipPath) && !File.Exists(jsonPath))
             {
