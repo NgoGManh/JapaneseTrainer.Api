@@ -62,10 +62,10 @@ namespace JapaneseTrainer.Api.Services
             if (!File.Exists(zipPath))
             {
                 // fallback tên đơn giản hơn nếu file đổi tên
-                zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json.zip");
+                zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1+20251208123023.json.zip");
             }
 
-            var jsonPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json");
+            var jsonPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1+20251208123023.json");
 
             if (!File.Exists(zipPath) && !File.Exists(jsonPath))
             {
