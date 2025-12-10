@@ -7,6 +7,7 @@ namespace JapaneseTrainer.Api.Repositories
         // Item methods
         Task<Item?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<List<Item>> GetItemsAsync(string? search, string? type, CancellationToken cancellationToken = default);
+        Task<bool> ItemExistsAsync(string hashKey, CancellationToken cancellationToken = default);
         Task AddItemAsync(Item item, CancellationToken cancellationToken = default);
         Task UpdateItemAsync(Item item, CancellationToken cancellationToken = default);
         Task DeleteItemAsync(Item item, CancellationToken cancellationToken = default);

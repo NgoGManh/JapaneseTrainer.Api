@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using JapaneseTrainer.Api.DTOs.Dictionary;
+using JapaneseTrainer.Api.Exceptions;
 using JapaneseTrainer.Api.Services;
 
 namespace JapaneseTrainer.Api.Controllers
@@ -78,18 +79,31 @@ namespace JapaneseTrainer.Api.Controllers
         [HttpPost("items")]
         [SwaggerOperation(
             Summary = "Create a new item",
-            Description = "Creates a new learning item (vocabulary, phrase, etc.) with Japanese text, reading, romaji, and meaning."
+            Description = "Creates a new learning item (vocabulary, phrase, etc.) with Japanese text, reading, romaji, and meaning. Automatically checks for duplicates using HashKey."
         )]
         [SwaggerResponse(201, "Item created successfully", typeof(ItemDto))]
         [SwaggerResponse(400, "Invalid request")]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
+        [SwaggerResponse(409, "Conflict - Item already exists")]
         [SwaggerResponse(422, "Validation error")]
         public async Task<ActionResult<ItemDto>> CreateItem(
             [FromBody] CreateItemRequest request,
             CancellationToken cancellationToken)
         {
-            var item = await _dictionaryService.CreateItemAsync(request, cancellationToken);
-            return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
+            try
+            {
+                var item = await _dictionaryService.CreateItemAsync(request, cancellationToken);
+                return CreatedAtAction(nameof(GetItemById), new { id = item.Id }, item);
+            }
+            catch (DuplicateItemException ex)
+            {
+                return Conflict(new { 
+                    message = ex.Message, 
+                    japanese = ex.Japanese, 
+                    reading = ex.Reading,
+                    hashKey = ex.HashKey 
+                });
+            }
         }
 
         /// <summary>

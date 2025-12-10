@@ -1,5 +1,7 @@
 using AutoMapper;
 using JapaneseTrainer.Api.DTOs.Dictionary;
+using JapaneseTrainer.Api.Exceptions;
+using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
 using JapaneseTrainer.Api.Repositories;
 
@@ -31,6 +33,16 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<ItemDto> CreateItemAsync(CreateItemRequest request, CancellationToken cancellationToken = default)
         {
+            // Generate HashKey if not provided
+            var hashKey = request.HashKey ?? ItemHashHelper.GenerateHashKey(request.Japanese, request.Reading);
+
+            // Check if item already exists
+            var exists = await _repository.ItemExistsAsync(hashKey, cancellationToken);
+            if (exists)
+            {
+                throw new DuplicateItemException(request.Japanese, request.Reading, hashKey);
+            }
+
             var item = new Item
             {
                 Id = Guid.NewGuid(),
@@ -38,8 +50,8 @@ namespace JapaneseTrainer.Api.Services
                 Reading = request.Reading,
                 Romaji = request.Romaji,
                 Meaning = request.Meaning,
-                Type = request.Type,
-                HashKey = request.HashKey,
+                Type = request.Type ?? "Vocabulary",
+                HashKey = hashKey,
                 CreatedAt = DateTime.UtcNow
             };
 

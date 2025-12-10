@@ -44,6 +44,12 @@ namespace JapaneseTrainer.Api.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public Task<bool> ItemExistsAsync(string hashKey, CancellationToken cancellationToken = default)
+        {
+            return _context.Items
+                .AnyAsync(i => i.HashKey == hashKey, cancellationToken);
+        }
+
         public async Task AddItemAsync(Item item, CancellationToken cancellationToken = default)
         {
             await _context.Items.AddAsync(item, cancellationToken);
