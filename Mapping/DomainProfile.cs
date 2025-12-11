@@ -22,8 +22,18 @@ namespace JapaneseTrainer.Api.Mapping
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
 
             // Dictionary / Core learning entities
-            CreateMap<Item, ItemDto>();
-            CreateMap<DictionaryEntry, DictionaryEntryDto>();
+            CreateMap<Item, ItemDto>()
+                .ForMember(dest => dest.DisplayMeaning,
+                    opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.MeaningVietnamese)
+                        ? src.MeaningVietnamese
+                        : src.Meaning));
+
+            CreateMap<DictionaryEntry, DictionaryEntryDto>()
+                .ForMember(dest => dest.DisplayMeaning,
+                    opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.MeaningVietnamese)
+                        ? src.MeaningVietnamese
+                        : src.Meaning));
+
             CreateMap<Kanji, KanjiDto>();
             CreateMap<ExampleSentence, ExampleSentenceDto>();
             CreateMap<Audio, AudioDto>();
@@ -52,7 +62,10 @@ namespace JapaneseTrainer.Api.Mapping
             CreateMap<StudyProgress, StudyQueueItemShortDto>()
                 .ForMember(dest => dest.ItemId, opt => opt.MapFrom(src => src.ItemId))
                 .ForMember(dest => dest.Japanese, opt => opt.MapFrom(src => src.Item.Japanese))
-                .ForMember(dest => dest.Meaning, opt => opt.MapFrom(src => src.Item.Meaning))
+                .ForMember(dest => dest.Meaning, opt => opt.MapFrom(src =>
+                    !string.IsNullOrWhiteSpace(src.Item.MeaningVietnamese)
+                        ? src.Item.MeaningVietnamese
+                        : src.Item.Meaning))
                 .ForMember(dest => dest.Skill, opt => opt.MapFrom(src => src.Skill))
                 .ForMember(dest => dest.Stage, opt => opt.MapFrom(src => src.Stage))
                 .ForMember(dest => dest.NextReviewAt, opt => opt.MapFrom(src => src.NextReviewAt));

@@ -11,11 +11,15 @@ services:
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Mssql@2025 -Q "SELECT 1" || exit 1
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Mssql@2025' -Q 'SELECT 1' || exit 1",
+        ]
       interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
 
   api:
     build: .

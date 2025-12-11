@@ -18,6 +18,12 @@ namespace JapaneseTrainer.Api.Models
         public string Meaning { get; set; } = string.Empty;
 
         [MaxLength(200)]
+        public string? MeaningVietnamese { get; set; }
+
+        [MaxLength(50)]
+        public string? HanViet { get; set; }
+
+        [MaxLength(200)]
         public string? Onyomi { get; set; } // Chinese reading
 
         [MaxLength(200)]

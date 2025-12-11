@@ -29,6 +29,7 @@ namespace JapaneseTrainer.Api.Services
                 _logger.LogInformation("Database migrated successfully using EF Core migrations.");
 
                 await SeedFromJmDictAsync(cancellationToken);
+                await SeedKanjiAsync(cancellationToken);
 
                 await DataSeeder.SeedAsync(_dbContext);
                 _logger.LogInformation("Package, Lesson, and Grammar seed completed.");
@@ -231,6 +232,165 @@ namespace JapaneseTrainer.Api.Services
                 _logger.LogError(ex, "Error seeding JMdict data.");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Seed Kanji data from kanjidic2-en zip
+        /// </summary>
+        public async Task SeedKanjiAsync(CancellationToken cancellationToken = default)
+        {
+            if (await _dbContext.Kanjis.AnyAsync(cancellationToken))
+            {
+                _logger.LogInformation("Kanjis already exist. Skipping Kanji seed.");
+                return;
+            }
+
+            var seedsDir = Path.Combine(Directory.GetCurrentDirectory(), "Data", "Seeds");
+            var zipPath = Path.Combine(seedsDir, "kanjidic2-en-3.6.1.json.zip");
+            if (!File.Exists(zipPath))
+            {
+                _logger.LogWarning("Kanji seed file not found at {ZipPath}", zipPath);
+                return;
+            }
+
+            _logger.LogInformation("Starting Kanji seed from {ZipPath}...", zipPath);
+
+            try
+            {
+                using var archive = ZipFile.OpenRead(zipPath);
+                var entry = archive.Entries.FirstOrDefault(e => e.FullName.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+                if (entry == null)
+                {
+                    _logger.LogWarning("No JSON entry found inside kanji zip {ZipPath}", zipPath);
+                    return;
+                }
+
+                using var entryStream = entry.Open();
+                var memory = new MemoryStream();
+                await entryStream.CopyToAsync(memory, cancellationToken);
+                memory.Position = 0;
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = false,
+                    ReadCommentHandling = JsonCommentHandling.Skip
+                };
+
+                var rootData = await JsonSerializer.DeserializeAsync<KanjiRoot>(memory, options, cancellationToken);
+                if (rootData?.Characters == null || rootData.Characters.Count == 0)
+                {
+                    _logger.LogWarning("No kanji found in kanji seed file.");
+                    return;
+                }
+
+                _logger.LogInformation("Found {Count} kanji. Starting import...", rootData.Characters.Count);
+
+                var originalAutoDetectChanges = _dbContext.ChangeTracker.AutoDetectChangesEnabled;
+                _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+
+                var kanjiBatch = new List<Kanji>();
+                var batchSize = 200;
+                var processedCount = 0;
+                var inserted = 0;
+
+                foreach (var src in rootData.Characters)
+                {
+                    try
+                    {
+                        var groups = src.ReadingMeaning.Groups ?? new List<KanjiGroup>();
+                        var meaningsEn = groups
+                            .SelectMany(g => g.Meanings ?? new List<KanjiMeaning>())
+                            .Where(m => string.IsNullOrWhiteSpace(m.Lang) || m.Lang == "en")
+                            .Select(m => m.Value)
+                            .Where(v => !string.IsNullOrWhiteSpace(v))
+                            .ToList();
+
+                        var onyomi = groups
+                            .SelectMany(g => g.Readings ?? new List<KanjiReading>())
+                            .Where(r => r.Type == "ja_on" && !string.IsNullOrWhiteSpace(r.Value))
+                            .Select(r => r.Value)
+                            .ToList();
+
+                        var kunyomi = groups
+                            .SelectMany(g => g.Readings ?? new List<KanjiReading>())
+                            .Where(r => r.Type == "ja_kun" && !string.IsNullOrWhiteSpace(r.Value))
+                            .Select(r => r.Value)
+                            .ToList();
+
+                        // Skip entries without English meaning
+                        if (!meaningsEn.Any())
+                        {
+                            continue;
+                        }
+
+                        var misc = src.Misc ?? new KanjiMisc();
+                        var strokes = misc.StrokeCounts?.FirstOrDefault();
+                        var jlpt = MapJlpt(misc.JlptLevel);
+
+                        var kanji = new Kanji
+                        {
+                            Id = Guid.NewGuid(),
+                            Character = src.Literal,
+                            Meaning = string.Join(", ", meaningsEn),
+                            MeaningVietnamese = null,
+                            HanViet = null,
+                            Onyomi = string.Join(", ", onyomi),
+                            Kunyomi = string.Join(", ", kunyomi),
+                            Strokes = strokes,
+                            Level = jlpt,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        kanjiBatch.Add(kanji);
+                        processedCount++;
+
+                        if (kanjiBatch.Count >= batchSize)
+                        {
+                            await _dbContext.Kanjis.AddRangeAsync(kanjiBatch, cancellationToken);
+                            await _dbContext.SaveChangesAsync(cancellationToken);
+                            _dbContext.ChangeTracker.Clear();
+                            inserted += kanjiBatch.Count;
+                            kanjiBatch.Clear();
+                            _logger.LogInformation("Inserted kanji batch. Inserted total {Inserted}/{Processed}", inserted, processedCount);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error processing kanji {Literal}", src.Literal);
+                    }
+                }
+
+                if (kanjiBatch.Any())
+                {
+                    await _dbContext.Kanjis.AddRangeAsync(kanjiBatch, cancellationToken);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    _dbContext.ChangeTracker.Clear();
+                    inserted += kanjiBatch.Count;
+                }
+
+                _dbContext.ChangeTracker.AutoDetectChangesEnabled = originalAutoDetectChanges;
+
+                _logger.LogInformation("🎉 Kanji seed completed. Processed: {Processed}, Inserted: {Inserted}", processedCount, inserted);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error seeding Kanji data.");
+                throw;
+            }
+        }
+
+        private static string? MapJlpt(int? jlptLevel)
+        {
+            if (!jlptLevel.HasValue) return null;
+            return jlptLevel.Value switch
+            {
+                1 => "N1",
+                2 => "N2",
+                3 => "N3",
+                4 => "N4",
+                5 => "N5",
+                _ => null
+            };
         }
     }
 }

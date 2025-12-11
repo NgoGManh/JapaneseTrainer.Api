@@ -5,6 +5,8 @@ namespace JapaneseTrainer.Api.DTOs.Dictionary
         public Guid Id { get; set; }
         public string Character { get; set; } = string.Empty;
         public string Meaning { get; set; } = string.Empty;
+        public string? MeaningVietnamese { get; set; }
+        public string? HanViet { get; set; }
         public string? Onyomi { get; set; }
         public string? Kunyomi { get; set; }
         public int? Strokes { get; set; }

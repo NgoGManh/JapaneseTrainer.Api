@@ -24,6 +24,9 @@ namespace JapaneseTrainer.Api.Models
         [MaxLength(500)]
         public string Meaning { get; set; } = string.Empty;
 
+        [MaxLength(500)]
+        public string? MeaningVietnamese { get; set; }
+
         [MaxLength(50)]
         public string? PartOfSpeech { get; set; } // Noun, Verb, Adjective, etc.
 

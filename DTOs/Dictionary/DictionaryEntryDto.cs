@@ -7,6 +7,8 @@ namespace JapaneseTrainer.Api.DTOs.Dictionary
         public string? Reading { get; set; }
         public string? Romaji { get; set; }
         public string Meaning { get; set; } = string.Empty;
+        public string? MeaningVietnamese { get; set; }
+        public string DisplayMeaning { get; set; } = string.Empty;
         public string? PartOfSpeech { get; set; }
         public string? JlptLevel { get; set; }
         public Guid? KanjiId { get; set; }
