@@ -9,20 +9,17 @@ using JapaneseTrainer.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext + SQL Server với retry
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>
         {
-            // Retry tạm thời nếu gặp lỗi network / DB chưa sẵn sàng
             sqlOptions.EnableRetryOnFailure();
+            sqlOptions.CommandTimeout(300);
         }));
 
-// Controllers
 builder.Services.AddControllers();
 
-// Swagger + định nghĩa Bearer auth
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -37,7 +34,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Định nghĩa scheme Bearer để Swagger hiển thị nút Authorize
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -48,7 +44,6 @@ builder.Services.AddSwaggerGen(c =>
         BearerFormat = "JWT"
     });
 
-    // Yêu cầu Bearer token cho tất cả endpoints (trừ những endpoint có [AllowAnonymous])
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -64,7 +59,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Enable XML comments nếu có
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -73,7 +67,6 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// JWT Auth
 var jwtConfig = builder.Configuration.GetSection("Jwt");
 var secretKey = Encoding.UTF8.GetBytes(jwtConfig["SecretKey"]!);
 
@@ -99,7 +92,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// Đăng ký Repositories & Services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDictionaryRepository, DictionaryRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -126,15 +118,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Đảm bảo database & bảng được tạo tự động khi khởi động
 using (var scope = app.Services.CreateScope())
 {
     var initializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
     await initializer.EnsureCreatedAsync();
 }
 
-// Middleware
-// Always expose Swagger for now (dev/testing). Remove or protect in production as needed.
 app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(c =>

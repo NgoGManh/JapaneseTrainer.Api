@@ -25,16 +25,11 @@ namespace JapaneseTrainer.Api.Services
         {
             try
             {
-                // Dùng migrations chuẩn của EF Core.
-                // Nếu database chưa có, MigrateAsync sẽ tạo mới và apply toàn bộ migrations.
-                // Nếu đã có, nó sẽ chỉ apply các migration còn thiếu.
                 await _dbContext.Database.MigrateAsync(cancellationToken);
                 _logger.LogInformation("Database migrated successfully using EF Core migrations.");
 
-                // Seed JMdict data after migration
                 await SeedFromJmDictAsync(cancellationToken);
 
-                // Seed Package, Lesson, and Grammar data
                 await DataSeeder.SeedAsync(_dbContext);
                 _logger.LogInformation("Package, Lesson, and Grammar seed completed.");
             }
@@ -50,7 +45,6 @@ namespace JapaneseTrainer.Api.Services
         /// </summary>
         public async Task SeedFromJmDictAsync(CancellationToken cancellationToken = default)
         {
-            // Kiểm tra nếu DB đã có dữ liệu thì bỏ qua
             if (await _dbContext.Items.AnyAsync(cancellationToken))
             {
                 _logger.LogInformation("Items already exist in database. Skipping JMdict seed.");
@@ -61,7 +55,6 @@ namespace JapaneseTrainer.Api.Services
             var zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json.zip");
             if (!File.Exists(zipPath))
             {
-                // fallback tên đơn giản hơn nếu file đổi tên
                 zipPath = Path.Combine(seedsDir, "jmdict-eng-3.6.1.json.zip");
             }
 
@@ -89,7 +82,6 @@ namespace JapaneseTrainer.Api.Services
                         return;
                     }
 
-                    // Copy stream to memory so we can keep it after disposing archive
                     using var zipEntryStream = entry.Open();
                     var memory = new MemoryStream();
                     await zipEntryStream.CopyToAsync(memory, cancellationToken);
@@ -123,7 +115,7 @@ namespace JapaneseTrainer.Api.Services
                 _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
 
                 var itemsToAdd = new List<Item>();
-                var batchSize = 500; 
+                var batchSize = 200; 
                 var processedCount = 0;
                 var skippedCount = 0;
                 var totalInserted = 0;
@@ -132,7 +124,6 @@ namespace JapaneseTrainer.Api.Services
                 {
                     try
                     {
-                        // Ưu tiên lấy Kanji common hoặc đầu tiên, nếu không có thì lấy Kana common hoặc đầu tiên
                         var kanjiEntry = entry.Kanji.FirstOrDefault(k => k.Common == true) 
                             ?? entry.Kanji.FirstOrDefault();
                         var kanaEntry = entry.Kana.FirstOrDefault(k => k.Common == true) 
@@ -147,7 +138,6 @@ namespace JapaneseTrainer.Api.Services
                         var primaryText = kanjiEntry?.Text ?? kanaEntry.Text;
                         var reading = kanaEntry.Text;
 
-                        // Lấy nghĩa Tiếng Anh đầu tiên từ sense đầu tiên
                         var firstSense = entry.Sense.FirstOrDefault();
                         var englishGloss = firstSense?.Gloss
                             .FirstOrDefault(g => g.Lang == "eng")?.Text 
@@ -160,13 +150,10 @@ namespace JapaneseTrainer.Api.Services
                             continue;
                         }
 
-                        // Map PartOfSpeech - lấy từ sense đầu tiên
                         var posRaw = firstSense?.PartOfSpeech.FirstOrDefault() ?? "unknown";
 
-                        // Tạo HashKey để tránh duplicate (sử dụng helper để đảm bảo tính nhất quán)
                         var hashKey = ItemHashHelper.GenerateHashKey(primaryText, reading);
 
-                        // Kiểm tra duplicate bằng HashKey
                         var exists = await _dbContext.Items
                             .AnyAsync(i => i.HashKey == hashKey, cancellationToken);
                         
@@ -184,8 +171,8 @@ namespace JapaneseTrainer.Api.Services
                             Id = itemId,
                             Japanese = primaryText,
                             Reading = reading,
-                            Romaji = null, // JMdict không có, để NULL cho AI điền sau
-                            Meaning = englishGloss, // Lưu tạm tiếng Anh
+                            Romaji = null, 
+                            Meaning = englishGloss, 
                             Type = "Vocabulary",
                             HashKey = hashKey,
                             CreatedAt = DateTime.UtcNow,
@@ -196,7 +183,7 @@ namespace JapaneseTrainer.Api.Services
                                 Reading = reading,
                                 Meaning = englishGloss,
                                 PartOfSpeech = posRaw,
-                                JlptLevel = null, // Để null, chờ AI phân loại
+                                JlptLevel = null,
                                 ItemId = itemId,
                                 CreatedAt = DateTime.UtcNow
                             }
