@@ -119,10 +119,14 @@ namespace JapaneseTrainer.Api.Services
 
                 _logger.LogInformation("Found {Count} words in JMdict file. Starting import...", rootData.Words.Count);
 
+                var originalAutoDetectChanges = _dbContext.ChangeTracker.AutoDetectChangesEnabled;
+                _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+
                 var itemsToAdd = new List<Item>();
-                var batchSize = 1000; // Chia nhỏ để insert cho nhanh
+                var batchSize = 500; 
                 var processedCount = 0;
                 var skippedCount = 0;
+                var totalInserted = 0;
 
                 foreach (var entry in rootData.Words)
                 {
@@ -201,14 +205,18 @@ namespace JapaneseTrainer.Api.Services
                         itemsToAdd.Add(newItem);
                         processedCount++;
 
-                        // Bulk Insert theo batch
                         if (itemsToAdd.Count >= batchSize)
                         {
                             await _dbContext.Items.AddRangeAsync(itemsToAdd, cancellationToken);
                             await _dbContext.SaveChangesAsync(cancellationToken);
-                            _logger.LogInformation("Inserted batch: {Processed} items processed, {Skipped} skipped", 
-                                processedCount, skippedCount);
+                            
+                            _dbContext.ChangeTracker.Clear();
+                            
+                            totalInserted += itemsToAdd.Count;
                             itemsToAdd.Clear();
+                            
+                            _logger.LogInformation("✅ Đã nạp {TotalInserted} từ (Processed: {Processed}, Skipped: {Skipped})", 
+                                totalInserted, processedCount, skippedCount);
                         }
                     }
                     catch (Exception ex)
@@ -218,15 +226,18 @@ namespace JapaneseTrainer.Api.Services
                     }
                 }
 
-                // Save nốt số còn lại
                 if (itemsToAdd.Any())
                 {
                     await _dbContext.Items.AddRangeAsync(itemsToAdd, cancellationToken);
                     await _dbContext.SaveChangesAsync(cancellationToken);
+                    _dbContext.ChangeTracker.Clear();
+                    totalInserted += itemsToAdd.Count;
                 }
 
-                _logger.LogInformation("JMdict seed completed. Processed: {Processed}, Skipped: {Skipped}, Total inserted: {Total}", 
-                    processedCount, skippedCount, processedCount - skippedCount);
+                _dbContext.ChangeTracker.AutoDetectChangesEnabled = originalAutoDetectChanges;
+
+                _logger.LogInformation("🎉 JMdict seed completed! Processed: {Processed}, Skipped: {Skipped}, Total inserted: {Total}", 
+                    processedCount, skippedCount, totalInserted);
             }
             catch (Exception ex)
             {

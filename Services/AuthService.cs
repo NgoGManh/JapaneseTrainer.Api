@@ -59,7 +59,6 @@ namespace JapaneseTrainer.Api.Services
 
         private static string HashPassword(string password)
         {
-            // Đơn giản: SHA256. Sau này có thể đổi sang algo mạnh hơn như BCrypt/Argon2.
             using var sha = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(password);
             var hash = sha.ComputeHash(bytes);
