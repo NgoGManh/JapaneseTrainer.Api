@@ -30,7 +30,15 @@ namespace JapaneseTrainer.Api.Services
         {
             filter.Normalize();
             var query = _repository.GetItemsQuery(filter.Search, filter.Type);
+            
+            // Convert snake_case to PascalCase and validate property exists
             var sortBy = ConvertSnakeCaseToPascalCase(filter.SortBy ?? "created_at");
+            if (string.IsNullOrWhiteSpace(sortBy))
+            {
+                sortBy = "CreatedAt"; // Default fallback
+            }
+            
+            // Use CreatedAt as default if property doesn't exist
             query = query.SortBy(sortBy, filter.OrderBy, "CreatedAt");
             var pagedResult = await query.ToPagedResultAsync(filter.Page, filter.Limit, cancellationToken);
             return new PagedResult<ItemDto>(
@@ -43,8 +51,17 @@ namespace JapaneseTrainer.Api.Services
 
         private static string ConvertSnakeCaseToPascalCase(string? snakeCase)
         {
-            if (string.IsNullOrWhiteSpace(snakeCase)) return snakeCase ?? string.Empty;
-            return string.Join("", snakeCase.Split('_').Select(s => char.ToUpper(s[0]) + s.Substring(1).ToLower()));
+            if (string.IsNullOrWhiteSpace(snakeCase)) return string.Empty;
+            
+            var parts = snakeCase.Split('_', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return string.Empty;
+            
+            return string.Join("", parts.Select(s => 
+            {
+                if (string.IsNullOrEmpty(s)) return string.Empty;
+                if (s.Length == 1) return s.ToUpper();
+                return char.ToUpper(s[0]) + s.Substring(1).ToLower();
+            }));
         }
 
         public async Task<ItemDto?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default)

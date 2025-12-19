@@ -41,8 +41,23 @@ namespace JapaneseTrainer.Api.Controllers
             [FromQuery] ItemFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var result = await _dictionaryService.GetItemsPagedAsync(filter, cancellationToken);
-            return Ok(result);
+            try
+            {
+                // Ensure filter is normalized
+                filter.Normalize();
+                var result = await _dictionaryService.GetItemsPagedAsync(filter, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Log error for debugging (in production, use ILogger)
+                return StatusCode(500, new { 
+                    error = "Internal server error", 
+                    message = ex.Message,
+                    innerException = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
         }
 
         /// <summary>

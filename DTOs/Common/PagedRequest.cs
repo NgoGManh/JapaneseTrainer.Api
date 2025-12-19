@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace JapaneseTrainer.Api.DTOs.Common
 {
@@ -16,6 +18,7 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// Page number (1-based). Default: 1, must be greater than 0
         /// </summary>
         [FromQuery(Name = "page")]
+        [DefaultValue(1)]
         [Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0")]
         public int Page
         {
@@ -27,6 +30,7 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// Number of items per page. Default: 20, Max: 100, must be greater than 0
         /// </summary>
         [FromQuery(Name = "limit")]
+        [DefaultValue(20)]
         [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
         public int Limit
         {
@@ -58,6 +62,7 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// desc: Descending | asc: Ascending
         /// </summary>
         [FromQuery(Name = "order_by")]
+        [DefaultValue("desc")]
         [RegularExpression("^(asc|desc)$", ErrorMessage = "OrderBy must be either 'asc' or 'desc'")]
         public string OrderBy { get; set; } = "desc";
 

@@ -7,6 +7,7 @@ using JapaneseTrainer.Api.Common;
 using JapaneseTrainer.Api.Data;
 using JapaneseTrainer.Api.Repositories;
 using JapaneseTrainer.Api.Services;
+using JapaneseTrainer.Api.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +67,9 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+
+    // Add filter to show default values in Swagger for query parameters
+    c.OperationFilter<SwaggerDefaultValueOperationFilter>();
 });
 
 var jwtConfig = builder.Configuration.GetSection("Jwt");
