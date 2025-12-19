@@ -1,7 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using JapaneseTrainer.Api.Data;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Exercises;
+using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
 using JapaneseTrainer.Api.Models.Enums;
 
@@ -52,6 +54,43 @@ namespace JapaneseTrainer.Api.Services
                 .ToListAsync(cancellationToken);
 
             return _mapper.Map<List<ExerciseDto>>(exercises);
+        }
+
+        public async Task<PagedResult<ExerciseDto>> GetExercisesPagedAsync(
+            ExerciseFilterRequest filter,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Exercises.AsQueryable();
+
+            if (filter.Type.HasValue)
+            {
+                query = query.Where(e => e.Type == filter.Type.Value);
+            }
+
+            if (filter.Skill.HasValue)
+            {
+                query = query.Where(e => e.Skill == filter.Skill.Value);
+            }
+
+            if (filter.ItemId.HasValue)
+            {
+                query = query.Where(e => e.ItemId == filter.ItemId.Value);
+            }
+
+            if (filter.GrammarMasterId.HasValue)
+            {
+                query = query.Where(e => e.GrammarMasterId == filter.GrammarMasterId.Value);
+            }
+
+            query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
+            var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
+
+            return new PagedResult<ExerciseDto>(
+                _mapper.Map<List<ExerciseDto>>(pagedResult.Items),
+                pagedResult.TotalCount,
+                pagedResult.PageNumber,
+                pagedResult.PageSize
+            );
         }
 
         public async Task<ExerciseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

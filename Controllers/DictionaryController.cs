@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Dictionary;
 using JapaneseTrainer.Api.Exceptions;
 using JapaneseTrainer.Api.Services;
@@ -31,18 +32,17 @@ namespace JapaneseTrainer.Api.Controllers
         /// <returns>List of items</returns>
         [HttpGet("items")]
         [SwaggerOperation(
-            Summary = "Get all items",
-            Description = "Retrieves a list of all learning items (vocabulary, phrases, etc.) with optional search and type filtering."
+            Summary = "Get all items (paginated)",
+            Description = "Retrieves a paginated list of learning items (vocabulary, phrases, etc.) with optional search, type filtering, sorting, and pagination."
         )]
-        [SwaggerResponse(200, "Items retrieved successfully", typeof(List<ItemDto>))]
+        [SwaggerResponse(200, "Items retrieved successfully", typeof(PagedResult<ItemDto>))]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
-        public async Task<ActionResult<List<ItemDto>>> GetItems(
-            [FromQuery] string? search,
-            [FromQuery] string? type,
+        public async Task<ActionResult<PagedResult<ItemDto>>> GetItems(
+            [FromQuery] ItemFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var items = await _dictionaryService.GetItemsAsync(search, type, cancellationToken);
-            return Ok(items);
+            var result = await _dictionaryService.GetItemsPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         /// <summary>
@@ -167,20 +167,18 @@ namespace JapaneseTrainer.Api.Controllers
         #region Dictionary Entries
 
         /// <summary>
-        /// Get all dictionary entries with optional filtering
+        /// Get all dictionary entries with optional filtering (paginated)
         /// </summary>
         [HttpGet("entries")]
-        [SwaggerOperation(Summary = "Get all dictionary entries")]
-        [SwaggerResponse(200, "Entries retrieved successfully", typeof(List<DictionaryEntryDto>))]
+        [SwaggerOperation(Summary = "Get all dictionary entries (paginated)", Description = "Retrieves a paginated list of dictionary entries with optional filtering, sorting, and pagination.")]
+        [SwaggerResponse(200, "Entries retrieved successfully", typeof(PagedResult<DictionaryEntryDto>))]
         [SwaggerResponse(401, "Unauthorized")]
-        public async Task<ActionResult<List<DictionaryEntryDto>>> GetDictionaryEntries(
-            [FromQuery] string? search,
-            [FromQuery] string? jlptLevel,
-            [FromQuery] Guid? kanjiId,
+        public async Task<ActionResult<PagedResult<DictionaryEntryDto>>> GetDictionaryEntries(
+            [FromQuery] DictionaryEntryFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var entries = await _dictionaryService.GetDictionaryEntriesAsync(search, jlptLevel, kanjiId, cancellationToken);
-            return Ok(entries);
+            var result = await _dictionaryService.GetDictionaryEntriesPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         /// <summary>
@@ -266,19 +264,18 @@ namespace JapaneseTrainer.Api.Controllers
         #region Kanji
 
         /// <summary>
-        /// Get all kanji with optional filtering
+        /// Get all kanji with optional filtering (paginated)
         /// </summary>
         [HttpGet("kanji")]
-        [SwaggerOperation(Summary = "Get all kanji")]
-        [SwaggerResponse(200, "Kanji retrieved successfully", typeof(List<KanjiDto>))]
+        [SwaggerOperation(Summary = "Get all kanji (paginated)", Description = "Retrieves a paginated list of kanji characters with optional filtering, sorting, and pagination.")]
+        [SwaggerResponse(200, "Kanji retrieved successfully", typeof(PagedResult<KanjiDto>))]
         [SwaggerResponse(401, "Unauthorized")]
-        public async Task<ActionResult<List<KanjiDto>>> GetKanjis(
-            [FromQuery] string? search,
-            [FromQuery] string? level,
+        public async Task<ActionResult<PagedResult<KanjiDto>>> GetKanjis(
+            [FromQuery] KanjiFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var kanjis = await _dictionaryService.GetKanjisAsync(search, level, cancellationToken);
-            return Ok(kanjis);
+            var result = await _dictionaryService.GetKanjisPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         /// <summary>

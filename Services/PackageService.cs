@@ -1,7 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using JapaneseTrainer.Api.Data;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Packages;
+using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
 
 namespace JapaneseTrainer.Api.Services
@@ -48,6 +50,37 @@ namespace JapaneseTrainer.Api.Services
                 .ToListAsync(cancellationToken);
 
             return packages.Select(MapPackageWithLessons).ToList();
+        }
+
+        public async Task<PagedResult<PackageDto>> GetPackagesPagedAsync(PackageFilterRequest filter, CancellationToken cancellationToken = default)
+        {
+            var query = _context.Packages
+                .Include(p => p.Lessons)
+                    .ThenInclude(l => l.LessonItems)
+                .Include(p => p.Lessons)
+                    .ThenInclude(l => l.LessonGrammars)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                query = query.Where(p => p.Title.Contains(filter.Search) || (p.Description != null && p.Description.Contains(filter.Search)));
+            }
+
+            if (filter.OwnerId.HasValue)
+            {
+                query = query.Where(p => p.OwnerId == filter.OwnerId.Value);
+            }
+
+            if (filter.IsPublic.HasValue)
+            {
+                query = query.Where(p => p.IsPublic == filter.IsPublic.Value);
+            }
+
+            query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
+            var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
+
+            var dtos = pagedResult.Items.Select(MapPackageWithLessons).ToList();
+            return new PagedResult<PackageDto>(dtos, pagedResult.TotalCount, pagedResult.PageNumber, pagedResult.PageSize);
         }
 
         public async Task<PackageDto?> GetPackageByIdAsync(Guid id, CancellationToken cancellationToken = default)

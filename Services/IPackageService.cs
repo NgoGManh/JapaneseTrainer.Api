@@ -1,3 +1,4 @@
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Packages;
 
 namespace JapaneseTrainer.Api.Services
@@ -6,6 +7,7 @@ namespace JapaneseTrainer.Api.Services
     {
         // Package
         Task<List<PackageDto>> GetPackagesAsync(string? search, Guid? ownerId, bool? isPublic, CancellationToken cancellationToken = default);
+        Task<PagedResult<PackageDto>> GetPackagesPagedAsync(PackageFilterRequest filter, CancellationToken cancellationToken = default);
         Task<PackageDto?> GetPackageByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<PackageDto> CreatePackageAsync(CreatePackageRequest request, CancellationToken cancellationToken = default);
         Task<PackageDto?> UpdatePackageAsync(Guid id, UpdatePackageRequest request, CancellationToken cancellationToken = default);

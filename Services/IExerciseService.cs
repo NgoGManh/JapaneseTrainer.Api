@@ -1,3 +1,4 @@
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Exercises;
 using JapaneseTrainer.Api.Models.Enums;
 
@@ -10,6 +11,9 @@ namespace JapaneseTrainer.Api.Services
             LearningSkill? skill = null,
             Guid? itemId = null,
             Guid? grammarMasterId = null,
+            CancellationToken cancellationToken = default);
+        Task<PagedResult<ExerciseDto>> GetExercisesPagedAsync(
+            ExerciseFilterRequest filter,
             CancellationToken cancellationToken = default);
 
         Task<ExerciseDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

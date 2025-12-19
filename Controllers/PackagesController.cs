@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Packages;
 using JapaneseTrainer.Api.Services;
 
@@ -22,16 +23,14 @@ namespace JapaneseTrainer.Api.Controllers
         #region Packages
 
         [HttpGet]
-        [SwaggerOperation(Summary = "Get packages", Description = "List packages with optional filters (search, ownerId, isPublic).")]
-        [SwaggerResponse(200, "Packages retrieved", typeof(List<PackageDto>))]
-        public async Task<ActionResult<List<PackageDto>>> GetPackages(
-            [FromQuery] string? search,
-            [FromQuery] Guid? ownerId,
-            [FromQuery] bool? isPublic,
+        [SwaggerOperation(Summary = "Get packages (paginated)", Description = "List packages with optional filters (search, ownerId, isPublic), sorting, and pagination.")]
+        [SwaggerResponse(200, "Packages retrieved", typeof(PagedResult<PackageDto>))]
+        public async Task<ActionResult<PagedResult<PackageDto>>> GetPackages(
+            [FromQuery] PackageFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var packages = await _packageService.GetPackagesAsync(search, ownerId, isPublic, cancellationToken);
-            return Ok(packages);
+            var result = await _packageService.GetPackagesPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]

@@ -1,3 +1,4 @@
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Grammar;
 
 namespace JapaneseTrainer.Api.Services
@@ -8,6 +9,9 @@ namespace JapaneseTrainer.Api.Services
         Task<List<GrammarMasterDto>> GetMastersAsync(
             string? search = null,
             string? level = null,
+            CancellationToken cancellationToken = default);
+        Task<PagedResult<GrammarMasterDto>> GetMastersPagedAsync(
+            GrammarMasterFilterRequest filter,
             CancellationToken cancellationToken = default);
 
         Task<GrammarMasterDto?> GetMasterByIdAsync(Guid id, CancellationToken cancellationToken = default);

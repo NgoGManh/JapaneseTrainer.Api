@@ -1,3 +1,4 @@
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Dictionary;
 
 namespace JapaneseTrainer.Api.Services
@@ -6,6 +7,7 @@ namespace JapaneseTrainer.Api.Services
     {
         // Item methods
         Task<List<ItemDto>> GetItemsAsync(string? search, string? type, CancellationToken cancellationToken = default);
+        Task<PagedResult<ItemDto>> GetItemsPagedAsync(ItemFilterRequest filter, CancellationToken cancellationToken = default);
         Task<ItemDto?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<ItemDto> CreateItemAsync(CreateItemRequest request, CancellationToken cancellationToken = default);
         Task<ItemDto?> UpdateItemAsync(Guid id, CreateItemRequest request, CancellationToken cancellationToken = default);
@@ -13,6 +15,7 @@ namespace JapaneseTrainer.Api.Services
 
         // DictionaryEntry methods
         Task<List<DictionaryEntryDto>> GetDictionaryEntriesAsync(string? search, string? jlptLevel, Guid? kanjiId, CancellationToken cancellationToken = default);
+        Task<PagedResult<DictionaryEntryDto>> GetDictionaryEntriesPagedAsync(DictionaryEntryFilterRequest filter, CancellationToken cancellationToken = default);
         Task<DictionaryEntryDto?> GetDictionaryEntryByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<DictionaryEntryDto> CreateDictionaryEntryAsync(CreateDictionaryEntryRequest request, CancellationToken cancellationToken = default);
         Task<DictionaryEntryDto?> UpdateDictionaryEntryAsync(Guid id, CreateDictionaryEntryRequest request, CancellationToken cancellationToken = default);
@@ -20,6 +23,7 @@ namespace JapaneseTrainer.Api.Services
 
         // Kanji methods
         Task<List<KanjiDto>> GetKanjisAsync(string? search, string? level, CancellationToken cancellationToken = default);
+        Task<PagedResult<KanjiDto>> GetKanjisPagedAsync(KanjiFilterRequest filter, CancellationToken cancellationToken = default);
         Task<KanjiDto?> GetKanjiByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<KanjiDto> CreateKanjiAsync(CreateKanjiRequest request, CancellationToken cancellationToken = default);
         Task<KanjiDto?> UpdateKanjiAsync(Guid id, CreateKanjiRequest request, CancellationToken cancellationToken = default);

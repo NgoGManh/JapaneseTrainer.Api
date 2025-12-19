@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Exercises;
 using JapaneseTrainer.Api.Models.Enums;
 using JapaneseTrainer.Api.Services;
@@ -21,17 +22,14 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         [HttpGet]
-        [SwaggerOperation(Summary = "Get exercises", Description = "Filter by type, skill, itemId, grammarMasterId")]
-        [SwaggerResponse(200, "Exercises retrieved", typeof(List<ExerciseDto>))]
-        public async Task<ActionResult<List<ExerciseDto>>> GetExercises(
-            [FromQuery] ExerciseType? type,
-            [FromQuery] LearningSkill? skill,
-            [FromQuery] Guid? itemId,
-            [FromQuery] Guid? grammarMasterId,
+        [SwaggerOperation(Summary = "Get exercises (paginated)", Description = "Filter by type, skill, itemId, grammarMasterId with sorting and pagination")]
+        [SwaggerResponse(200, "Exercises retrieved", typeof(PagedResult<ExerciseDto>))]
+        public async Task<ActionResult<PagedResult<ExerciseDto>>> GetExercises(
+            [FromQuery] ExerciseFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var list = await _exerciseService.GetExercisesAsync(type, skill, itemId, grammarMasterId, cancellationToken);
-            return Ok(list);
+            var result = await _exerciseService.GetExercisesPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]

@@ -1,7 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using JapaneseTrainer.Api.Data;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Grammar;
+using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
 
 namespace JapaneseTrainer.Api.Services
@@ -43,6 +45,35 @@ namespace JapaneseTrainer.Api.Services
                 .ToListAsync(cancellationToken);
 
             return _mapper.Map<List<GrammarMasterDto>>(masters);
+        }
+
+        public async Task<PagedResult<GrammarMasterDto>> GetMastersPagedAsync(
+            GrammarMasterFilterRequest filter,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.GrammarMasters.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                query = query.Where(g =>
+                    g.Title.Contains(filter.Search) ||
+                    (g.Meaning != null && g.Meaning.Contains(filter.Search)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Level))
+            {
+                query = query.Where(g => g.Level == filter.Level);
+            }
+
+            query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
+            var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
+
+            return new PagedResult<GrammarMasterDto>(
+                _mapper.Map<List<GrammarMasterDto>>(pagedResult.Items),
+                pagedResult.TotalCount,
+                pagedResult.PageNumber,
+                pagedResult.PageSize
+            );
         }
 
         public async Task<GrammarMasterDto?> GetMasterByIdAsync(Guid id, CancellationToken cancellationToken = default)

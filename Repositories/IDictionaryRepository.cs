@@ -1,4 +1,5 @@
 using JapaneseTrainer.Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace JapaneseTrainer.Api.Repositories
 {
@@ -7,6 +8,7 @@ namespace JapaneseTrainer.Api.Repositories
         // Item methods
         Task<Item?> GetItemByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<List<Item>> GetItemsAsync(string? search, string? type, CancellationToken cancellationToken = default);
+        IQueryable<Item> GetItemsQuery(string? search, string? type);
         Task<bool> ItemExistsAsync(string hashKey, CancellationToken cancellationToken = default);
         Task AddItemAsync(Item item, CancellationToken cancellationToken = default);
         Task UpdateItemAsync(Item item, CancellationToken cancellationToken = default);
@@ -15,6 +17,7 @@ namespace JapaneseTrainer.Api.Repositories
         // DictionaryEntry methods
         Task<DictionaryEntry?> GetDictionaryEntryByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<List<DictionaryEntry>> GetDictionaryEntriesAsync(string? search, string? jlptLevel, Guid? kanjiId, CancellationToken cancellationToken = default);
+        IQueryable<DictionaryEntry> GetDictionaryEntriesQuery(string? search, string? jlptLevel, Guid? kanjiId, string? partOfSpeech);
         Task AddDictionaryEntryAsync(DictionaryEntry entry, CancellationToken cancellationToken = default);
         Task UpdateDictionaryEntryAsync(DictionaryEntry entry, CancellationToken cancellationToken = default);
         Task DeleteDictionaryEntryAsync(DictionaryEntry entry, CancellationToken cancellationToken = default);
@@ -23,6 +26,7 @@ namespace JapaneseTrainer.Api.Repositories
         Task<Kanji?> GetKanjiByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<Kanji?> GetKanjiByCharacterAsync(string character, CancellationToken cancellationToken = default);
         Task<List<Kanji>> GetKanjisAsync(string? search, string? level, CancellationToken cancellationToken = default);
+        IQueryable<Kanji> GetKanjisQuery(string? search, string? level, int? minStrokes, int? maxStrokes);
         Task AddKanjiAsync(Kanji kanji, CancellationToken cancellationToken = default);
         Task UpdateKanjiAsync(Kanji kanji, CancellationToken cancellationToken = default);
         Task DeleteKanjiAsync(Kanji kanji, CancellationToken cancellationToken = default);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using JapaneseTrainer.Api.DTOs.AI;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.Models.Enums;
 using JapaneseTrainer.Api.Services;
 
@@ -33,15 +34,14 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         [HttpGet("jobs")]
-        [SwaggerOperation(Summary = "Get AI jobs", Description = "List jobs with optional filters (type, status)")]
-        [SwaggerResponse(200, "Jobs retrieved", typeof(List<AIJobDto>))]
-        public async Task<ActionResult<List<AIJobDto>>> GetJobs(
-            [FromQuery] AIJobType? type,
-            [FromQuery] AIJobStatus? status,
+        [SwaggerOperation(Summary = "Get AI jobs (paginated)", Description = "List jobs with optional filters (type, status, userId), sorting, and pagination")]
+        [SwaggerResponse(200, "Jobs retrieved", typeof(PagedResult<AIJobDto>))]
+        public async Task<ActionResult<PagedResult<AIJobDto>>> GetJobs(
+            [FromQuery] AIJobFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var list = await _aiQueueService.GetJobsAsync(type, status, cancellationToken);
-            return Ok(list);
+            var result = await _aiQueueService.GetJobsPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         [HttpGet("jobs/{id:guid}")]

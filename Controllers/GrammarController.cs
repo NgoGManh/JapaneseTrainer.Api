@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Grammar;
 using JapaneseTrainer.Api.Services;
 
@@ -22,15 +23,14 @@ namespace JapaneseTrainer.Api.Controllers
         #region Grammar Masters
 
         [HttpGet("masters")]
-        [SwaggerOperation(Summary = "Get grammar masters", Description = "List all grammar master records with optional search and level filter.")]
-        [SwaggerResponse(200, "Masters retrieved", typeof(List<GrammarMasterDto>))]
-        public async Task<ActionResult<List<GrammarMasterDto>>> GetMasters(
-            [FromQuery] string? search,
-            [FromQuery] string? level,
+        [SwaggerOperation(Summary = "Get grammar masters (paginated)", Description = "List all grammar master records with optional search, level filter, sorting, and pagination.")]
+        [SwaggerResponse(200, "Masters retrieved", typeof(PagedResult<GrammarMasterDto>))]
+        public async Task<ActionResult<PagedResult<GrammarMasterDto>>> GetMasters(
+            [FromQuery] GrammarMasterFilterRequest filter,
             CancellationToken cancellationToken)
         {
-            var masters = await _grammarService.GetMastersAsync(search, level, cancellationToken);
-            return Ok(masters);
+            var result = await _grammarService.GetMastersPagedAsync(filter, cancellationToken);
+            return Ok(result);
         }
 
         [HttpGet("masters/{id:guid}")]
