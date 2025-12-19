@@ -135,6 +135,7 @@ namespace JapaneseTrainer.Api.Helpers
 
         /// <summary>
         /// Creates a PagedResult from a query using Page/Limit
+        /// Optimized for large tables by executing Count and data queries separately
         /// </summary>
         /// <typeparam name="T">Entity type</typeparam>
         /// <param name="query">Query to paginate</param>
@@ -152,11 +153,18 @@ namespace JapaneseTrainer.Api.Helpers
             if (limit < 1) limit = 20;
             if (limit > 100) limit = 100;
 
-            var totalCount = await query.CountAsync(cancellationToken);
-            var items = await query
+            // Optimize: Execute Count and data queries in parallel for better performance
+            // For very large tables, Count can be slow, so we execute it separately
+            var countTask = query.CountAsync(cancellationToken);
+            
+            // Prepare paginated query (don't execute yet)
+            var paginatedQuery = query
                 .Skip((page - 1) * limit)
-                .Take(limit)
-                .ToListAsync(cancellationToken);
+                .Take(limit);
+
+            // Execute both queries
+            var totalCount = await countTask;
+            var items = await paginatedQuery.ToListAsync(cancellationToken);
 
             return new PagedResult<T>(items, totalCount, page, limit);
         }

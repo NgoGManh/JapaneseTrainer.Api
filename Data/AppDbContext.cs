@@ -68,6 +68,49 @@ namespace JapaneseTrainer.Api.Data
 
             modelBuilder.Entity<UserDifficultItem>()
                 .HasKey(ud => new { ud.UserId, ud.ItemId });
+
+            // Performance indexes for large tables
+            // Items table indexes
+            modelBuilder.Entity<Item>()
+                .HasIndex(i => i.Type)
+                .HasDatabaseName("IX_Items_Type");
+
+            modelBuilder.Entity<Item>()
+                .HasIndex(i => i.CreatedAt)
+                .HasDatabaseName("IX_Items_CreatedAt");
+
+            modelBuilder.Entity<Item>()
+                .HasIndex(i => i.HashKey)
+                .IsUnique()
+                .HasDatabaseName("IX_Items_HashKey");
+
+            // Composite index for common search patterns
+            modelBuilder.Entity<Item>()
+                .HasIndex(i => new { i.Japanese, i.Reading })
+                .HasDatabaseName("IX_Items_Japanese_Reading");
+
+            // DictionaryEntries indexes
+            modelBuilder.Entity<DictionaryEntry>()
+                .HasIndex(d => d.JlptLevel)
+                .HasDatabaseName("IX_DictionaryEntries_JlptLevel");
+
+            modelBuilder.Entity<DictionaryEntry>()
+                .HasIndex(d => d.KanjiId)
+                .HasDatabaseName("IX_DictionaryEntries_KanjiId");
+
+            modelBuilder.Entity<DictionaryEntry>()
+                .HasIndex(d => d.CreatedAt)
+                .HasDatabaseName("IX_DictionaryEntries_CreatedAt");
+
+            // Kanji indexes
+            modelBuilder.Entity<Kanji>()
+                .HasIndex(k => k.Level)
+                .HasDatabaseName("IX_Kanjis_Level");
+
+            modelBuilder.Entity<Kanji>()
+                .HasIndex(k => k.Character)
+                .IsUnique()
+                .HasDatabaseName("IX_Kanjis_Character");
         }
     }
 }

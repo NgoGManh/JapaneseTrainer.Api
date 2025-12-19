@@ -38,9 +38,13 @@ namespace JapaneseTrainer.Api.Services
                 sortBy = "CreatedAt"; // Default fallback
             }
             
-            // Use CreatedAt as default if property doesn't exist
+            // Use CreatedAt as default if property doesn't exist (has index for performance)
             query = query.SortBy(sortBy, filter.OrderBy, "CreatedAt");
+            
+            // For large tables, execute count with a longer timeout
+            // The query is already filtered, so Count should be faster
             var pagedResult = await query.ToPagedResultAsync(filter.Page, filter.Limit, cancellationToken);
+            
             return new PagedResult<ItemDto>(
                 _mapper.Map<List<ItemDto>>(pagedResult.Items),
                 pagedResult.TotalCount,

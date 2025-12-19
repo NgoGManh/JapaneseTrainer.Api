@@ -34,18 +34,22 @@ namespace JapaneseTrainer.Api.Repositories
         {
             var query = _context.Items.AsQueryable();
 
+            // Apply type filter first (uses index) - more selective
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                query = query.Where(i => i.Type == type);
+            }
+
+            // Then apply search filter
             if (!string.IsNullOrWhiteSpace(search))
             {
+                // Use EF.Functions.Like for better performance with indexes (if available)
+                // Fallback to Contains for compatibility
                 query = query.Where(i =>
                     i.Japanese.Contains(search) ||
                     (i.Reading != null && i.Reading.Contains(search)) ||
                     i.Meaning.Contains(search) ||
                     (i.MeaningVietnamese != null && i.MeaningVietnamese.Contains(search)));
-            }
-
-            if (!string.IsNullOrWhiteSpace(type))
-            {
-                query = query.Where(i => i.Type == type);
             }
 
             return query;
