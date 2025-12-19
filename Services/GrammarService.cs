@@ -66,15 +66,22 @@ namespace JapaneseTrainer.Api.Services
                 query = query.Where(g => g.Level == filter.Level);
             }
 
-            query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
-            var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
+            var sortBy = ConvertSnakeCaseToPascalCase(filter.SortBy ?? "created_at");
+            query = query.SortBy(sortBy, filter.OrderBy, "CreatedAt");
+            var pagedResult = await query.ToPagedResultAsync(filter.Page, filter.Limit, cancellationToken);
 
             return new PagedResult<GrammarMasterDto>(
                 _mapper.Map<List<GrammarMasterDto>>(pagedResult.Items),
                 pagedResult.TotalCount,
-                pagedResult.PageNumber,
-                pagedResult.PageSize
+                pagedResult.Page,
+                pagedResult.Limit
             );
+        }
+
+        private static string ConvertSnakeCaseToPascalCase(string? snakeCase)
+        {
+            if (string.IsNullOrWhiteSpace(snakeCase)) return snakeCase ?? string.Empty;
+            return string.Join("", snakeCase.Split('_').Select(s => char.ToUpper(s[0]) + s.Substring(1).ToLower()));
         }
 
         public async Task<GrammarMasterDto?> GetMasterByIdAsync(Guid id, CancellationToken cancellationToken = default)

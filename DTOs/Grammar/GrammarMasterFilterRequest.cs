@@ -8,24 +8,19 @@ namespace JapaneseTrainer.Api.DTOs.Grammar
     public class GrammarMasterFilterRequest : PagedRequest
     {
         /// <summary>
-        /// Search term for pattern, explanation, or example (partial match)
-        /// </summary>
-        public string? Search { get; set; }
-
-        /// <summary>
         /// Filter by JLPT level (N5, N4, N3, N2, N1)
         /// </summary>
         public string? Level { get; set; }
 
         /// <summary>
-        /// Default sort by CreatedAt descending
+        /// Default sort by created_at descending
         /// </summary>
-        public new string? SortBy { get; set; } = "CreatedAt";
+        public new string? SortBy { get; set; } = "created_at";
 
         /// <summary>
-        /// Default sort direction descending
+        /// Default sort order descending
         /// </summary>
-        public new SortDirection SortDirection { get; set; } = SortDirection.Desc;
+        public new string OrderBy { get; set; } = "desc";
     }
 }
 

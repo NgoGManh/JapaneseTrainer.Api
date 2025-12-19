@@ -8,11 +8,6 @@ namespace JapaneseTrainer.Api.DTOs.Packages
     public class PackageFilterRequest : PagedRequest
     {
         /// <summary>
-        /// Search term for name or description (partial match)
-        /// </summary>
-        public string? Search { get; set; }
-
-        /// <summary>
         /// Filter by owner ID
         /// </summary>
         public Guid? OwnerId { get; set; }
@@ -23,14 +18,14 @@ namespace JapaneseTrainer.Api.DTOs.Packages
         public bool? IsPublic { get; set; }
 
         /// <summary>
-        /// Default sort by CreatedAt descending
+        /// Default sort by created_at descending
         /// </summary>
-        public new string? SortBy { get; set; } = "CreatedAt";
+        public new string? SortBy { get; set; } = "created_at";
 
         /// <summary>
-        /// Default sort direction descending
+        /// Default sort order descending
         /// </summary>
-        public new SortDirection SortDirection { get; set; } = SortDirection.Desc;
+        public new string OrderBy { get; set; } = "desc";
     }
 }
 

@@ -23,14 +23,14 @@ namespace JapaneseTrainer.Api.DTOs.Community
         public Guid? UserId { get; set; }
 
         /// <summary>
-        /// Default sort by CreatedAt descending (newest first)
+        /// Default sort by created_at descending (newest first)
         /// </summary>
-        public new string? SortBy { get; set; } = "CreatedAt";
+        public new string? SortBy { get; set; } = "created_at";
 
         /// <summary>
-        /// Default sort direction descending
+        /// Default sort order descending
         /// </summary>
-        public new SortDirection SortDirection { get; set; } = SortDirection.Desc;
+        public new string OrderBy { get; set; } = "desc";
     }
 }
 

@@ -14,22 +14,42 @@ namespace JapaneseTrainer.Api.Helpers
         /// </summary>
         /// <typeparam name="T">Entity type</typeparam>
         /// <param name="query">Query to paginate</param>
-        /// <param name="pageNumber">Page number (1-based)</param>
-        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="page">Page number (1-based)</param>
+        /// <param name="limit">Number of items per page</param>
         /// <returns>Paginated query</returns>
-        public static IQueryable<T> Paginate<T>(this IQueryable<T> query, int pageNumber, int pageSize)
+        public static IQueryable<T> Paginate<T>(this IQueryable<T> query, int page, int limit)
         {
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
+            if (page < 1) page = 1;
+            if (limit < 1) limit = 20;
+            if (limit > 100) limit = 100;
 
             return query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize);
+                .Skip((page - 1) * limit)
+                .Take(limit);
+        }
+
+
+        /// <summary>
+        /// Applies sorting to an IQueryable by property name using OrderBy string ("asc" or "desc")
+        /// </summary>
+        /// <typeparam name="T">Entity type</typeparam>
+        /// <param name="query">Query to sort</param>
+        /// <param name="sortBy">Property name to sort by (case-insensitive)</param>
+        /// <param name="orderBy">Sort order: "asc" or "desc"</param>
+        /// <param name="defaultSortBy">Default property name if sortBy is null or invalid</param>
+        /// <returns>Sorted query</returns>
+        public static IQueryable<T> SortBy<T>(
+            this IQueryable<T> query,
+            string? sortBy,
+            string orderBy = "desc",
+            string? defaultSortBy = null)
+        {
+            var sortDirection = orderBy?.ToLower() == "asc" ? SortDirection.Asc : SortDirection.Desc;
+            return SortBy(query, sortBy, sortDirection, defaultSortBy);
         }
 
         /// <summary>
-        /// Applies sorting to an IQueryable by property name
+        /// Applies sorting to an IQueryable by property name (backward compatibility)
         /// </summary>
         /// <typeparam name="T">Entity type</typeparam>
         /// <param name="query">Query to sort</param>
@@ -114,32 +134,33 @@ namespace JapaneseTrainer.Api.Helpers
         }
 
         /// <summary>
-        /// Creates a PagedResult from a query
+        /// Creates a PagedResult from a query using Page/Limit
         /// </summary>
         /// <typeparam name="T">Entity type</typeparam>
         /// <param name="query">Query to paginate</param>
-        /// <param name="pageNumber">Page number (1-based)</param>
-        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="page">Page number (1-based)</param>
+        /// <param name="limit">Number of items per page</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>PagedResult with items and metadata</returns>
         public static async Task<PagedResult<T>> ToPagedResultAsync<T>(
             this IQueryable<T> query,
-            int pageNumber,
-            int pageSize,
+            int page,
+            int limit,
             CancellationToken cancellationToken = default)
         {
-            if (pageNumber < 1) pageNumber = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 100) pageSize = 100;
+            if (page < 1) page = 1;
+            if (limit < 1) limit = 20;
+            if (limit > 100) limit = 100;
 
             var totalCount = await query.CountAsync(cancellationToken);
             var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((page - 1) * limit)
+                .Take(limit)
                 .ToListAsync(cancellationToken);
 
-            return new PagedResult<T>(items, totalCount, pageNumber, pageSize);
+            return new PagedResult<T>(items, totalCount, page, limit);
         }
+
     }
 }
 

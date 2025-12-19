@@ -8,11 +8,6 @@ namespace JapaneseTrainer.Api.DTOs.Dictionary
     public class KanjiFilterRequest : PagedRequest
     {
         /// <summary>
-        /// Search term for character, meaning, onyomi, or kunyomi (partial match)
-        /// </summary>
-        public string? Search { get; set; }
-
-        /// <summary>
         /// Filter by JLPT level (N5, N4, N3, N2, N1) or grade level
         /// </summary>
         public string? Level { get; set; }
@@ -28,14 +23,14 @@ namespace JapaneseTrainer.Api.DTOs.Dictionary
         public int? MaxStrokes { get; set; }
 
         /// <summary>
-        /// Default sort by Character ascending
+        /// Default sort by character ascending
         /// </summary>
-        public new string? SortBy { get; set; } = "Character";
+        public new string? SortBy { get; set; } = "character";
 
         /// <summary>
-        /// Default sort direction ascending
+        /// Default sort order ascending
         /// </summary>
-        public new SortDirection SortDirection { get; set; } = SortDirection.Asc;
+        public new string OrderBy { get; set; } = "asc";
     }
 }
 

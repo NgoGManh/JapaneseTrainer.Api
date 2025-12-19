@@ -14,12 +14,12 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// <summary>
         /// Current page number (1-based)
         /// </summary>
-        public int PageNumber { get; set; }
+        public int Page { get; set; }
 
         /// <summary>
         /// Number of items per page
         /// </summary>
-        public int PageSize { get; set; }
+        public int Limit { get; set; }
 
         /// <summary>
         /// Total number of items across all pages
@@ -29,17 +29,24 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// <summary>
         /// Total number of pages
         /// </summary>
-        public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+        public int TotalPages => (int)Math.Ceiling(TotalCount / (double)Limit);
 
         /// <summary>
         /// Whether there is a previous page
         /// </summary>
-        public bool HasPrevious => PageNumber > 1;
+        public bool HasPrevious => Page > 1;
 
         /// <summary>
         /// Whether there is a next page
         /// </summary>
-        public bool HasNext => PageNumber < TotalPages;
+        public bool HasNext => Page < TotalPages;
+
+        // Backward compatibility properties
+        [Obsolete("Use Page instead")]
+        public int PageNumber { get => Page; set => Page = value; }
+
+        [Obsolete("Use Limit instead")]
+        public int PageSize { get => Limit; set => Limit = value; }
 
         /// <summary>
         /// Creates a new empty paged result
@@ -51,13 +58,14 @@ namespace JapaneseTrainer.Api.DTOs.Common
         /// <summary>
         /// Creates a new paged result with the specified data
         /// </summary>
-        public PagedResult(List<T> items, int totalCount, int pageNumber, int pageSize)
+        public PagedResult(List<T> items, int totalCount, int page, int limit)
         {
             Items = items;
             TotalCount = totalCount;
-            PageNumber = pageNumber;
-            PageSize = pageSize;
+            Page = page;
+            Limit = limit;
         }
+
     }
 }
 
