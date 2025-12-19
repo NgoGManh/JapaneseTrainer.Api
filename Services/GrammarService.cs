@@ -51,6 +51,7 @@ namespace JapaneseTrainer.Api.Services
             GrammarMasterFilterRequest filter,
             CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _context.GrammarMasters.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.Search))

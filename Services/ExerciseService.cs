@@ -60,6 +60,7 @@ namespace JapaneseTrainer.Api.Services
             ExerciseFilterRequest filter,
             CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _context.Exercises.AsQueryable();
 
             if (filter.Type.HasValue)

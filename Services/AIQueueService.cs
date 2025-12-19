@@ -66,6 +66,7 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<PagedResult<AIJobDto>> GetJobsPagedAsync(AIJobFilterRequest filter, CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _context.AIQueues.AsQueryable();
 
             if (filter.Type.HasValue)

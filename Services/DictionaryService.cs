@@ -28,6 +28,7 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<PagedResult<ItemDto>> GetItemsPagedAsync(ItemFilterRequest filter, CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _repository.GetItemsQuery(filter.Search, filter.Type);
             query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
             var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
@@ -119,6 +120,7 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<PagedResult<DictionaryEntryDto>> GetDictionaryEntriesPagedAsync(DictionaryEntryFilterRequest filter, CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _repository.GetDictionaryEntriesQuery(filter.Search, filter.JlptLevel, filter.KanjiId, filter.PartOfSpeech);
             query = query.SortBy(filter.SortBy, filter.SortDirection, "CreatedAt");
             var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);
@@ -204,6 +206,7 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<PagedResult<KanjiDto>> GetKanjisPagedAsync(KanjiFilterRequest filter, CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _repository.GetKanjisQuery(filter.Search, filter.Level, filter.MinStrokes, filter.MaxStrokes);
             query = query.SortBy(filter.SortBy, filter.SortDirection, "Character");
             var pagedResult = await query.ToPagedResultAsync(filter.PageNumber, filter.PageSize, cancellationToken);

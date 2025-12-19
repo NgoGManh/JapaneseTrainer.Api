@@ -54,6 +54,7 @@ namespace JapaneseTrainer.Api.Services
 
         public async Task<PagedResult<PackageDto>> GetPackagesPagedAsync(PackageFilterRequest filter, CancellationToken cancellationToken = default)
         {
+            filter.Normalize();
             var query = _context.Packages
                 .Include(p => p.Lessons)
                     .ThenInclude(l => l.LessonItems)
