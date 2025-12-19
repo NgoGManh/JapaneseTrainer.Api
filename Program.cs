@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using JapaneseTrainer.Api.Common;
 using JapaneseTrainer.Api.Data;
 using JapaneseTrainer.Api.Repositories;
 using JapaneseTrainer.Api.Services;
@@ -91,6 +92,10 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+// CommonsDependencies service
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICommonsDependenciesService, CommonsDependenciesService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDictionaryRepository, DictionaryRepository>();

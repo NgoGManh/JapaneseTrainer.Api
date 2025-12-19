@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JapaneseTrainer.Api.DTOs.Common
 {
     /// <summary>
     /// Base class for paginated requests (following Python FastAPI pattern)
+    /// Similar to PaginationParams in Python FastAPI
     /// </summary>
     public class PagedRequest
     {
@@ -11,9 +13,10 @@ namespace JapaneseTrainer.Api.DTOs.Common
         private int _limit = 20;
 
         /// <summary>
-        /// Page number (1-based). Default: 1
+        /// Page number (1-based). Default: 1, must be greater than 0
         /// </summary>
-        [Range(1, int.MaxValue, ErrorMessage = "Page must be at least 1")]
+        [FromQuery(Name = "page")]
+        [Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0")]
         public int Page
         {
             get => _page;
@@ -21,8 +24,9 @@ namespace JapaneseTrainer.Api.DTOs.Common
         }
 
         /// <summary>
-        /// Number of items per page. Default: 20, Max: 100
+        /// Number of items per page. Default: 20, Max: 100, must be greater than 0
         /// </summary>
+        [FromQuery(Name = "limit")]
         [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
         public int Limit
         {
@@ -31,24 +35,37 @@ namespace JapaneseTrainer.Api.DTOs.Common
         }
 
         /// <summary>
-        /// Search term (searches across multiple fields)
+        /// Search term (searches across multiple fields). Anything you want.
         /// </summary>
+        [FromQuery(Name = "search")]
         public string? Search { get; set; }
 
         /// <summary>
         /// List of field names to search in (if null, searches in default fields)
+        /// Comma-separated string that will be parsed to list
         /// </summary>
-        public List<string>? SearchIn { get; set; }
+        [FromQuery(Name = "search_in")]
+        public string? SearchIn { get; set; }
 
         /// <summary>
-        /// Field name to sort by. Default: "created_at"
+        /// Field name to sort by. Default: "created_at". Anything you want.
         /// </summary>
+        [FromQuery(Name = "sort_by")]
         public string? SortBy { get; set; }
 
         /// <summary>
         /// Sort order: "asc" or "desc". Default: "desc"
+        /// desc: Descending | asc: Ascending
         /// </summary>
+        [FromQuery(Name = "order_by")]
+        [RegularExpression("^(asc|desc)$", ErrorMessage = "OrderBy must be either 'asc' or 'desc'")]
         public string OrderBy { get; set; } = "desc";
+
+        /// <summary>
+        /// Comma-separated list of fields to include in the response (field selection)
+        /// </summary>
+        [FromQuery(Name = "fields")]
+        public string? Fields { get; set; }
 
         /// <summary>
         /// Normalizes pagination values to ensure defaults are applied
