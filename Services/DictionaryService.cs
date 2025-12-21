@@ -1,10 +1,14 @@
 using AutoMapper;
+using JapaneseTrainer.Api.Data;
 using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Dictionary;
 using JapaneseTrainer.Api.Exceptions;
 using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
+using JapaneseTrainer.Api.Models.Import;
 using JapaneseTrainer.Api.Repositories;
+using Microsoft.EntityFrameworkCore;
+using MiniExcelLibs;
 
 namespace JapaneseTrainer.Api.Services
 {
@@ -12,11 +16,13 @@ namespace JapaneseTrainer.Api.Services
     {
         private readonly IDictionaryRepository _repository;
         private readonly IMapper _mapper;
+        private readonly AppDbContext _context;
 
-        public DictionaryService(IDictionaryRepository repository, IMapper mapper)
+        public DictionaryService(IDictionaryRepository repository, IMapper mapper, AppDbContext context)
         {
             _repository = repository;
             _mapper = mapper;
+            _context = context;
         }
 
         // Item methods
@@ -439,6 +445,167 @@ namespace JapaneseTrainer.Api.Services
             await _repository.DeleteAudioAsync(audio, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
             return true;
+        }
+
+        // Import methods
+        public async Task<ImportResultDto> ImportKanjiVietnameseAsync(Stream excelStream, CancellationToken cancellationToken = default)
+        {
+            // Read Excel data
+            var rows = excelStream.Query<KanjiUpdateDto>().ToList();
+
+            if (!rows.Any())
+            {
+                return new ImportResultDto
+                {
+                    Message = "File Excel rỗng hoặc không có dữ liệu hợp lệ",
+                    TotalProcessed = 0
+                };
+            }
+
+            // Get unique kanji characters from Excel
+            var kanjiChars = rows.Select(x => x.Kanji).Distinct().ToList();
+
+            // Get existing kanjis from database
+            var existingKanjis = await _context.Kanjis
+                .Where(k => kanjiChars.Contains(k.Character))
+                .ToListAsync(cancellationToken);
+
+            var existingKanjiDict = existingKanjis.ToDictionary(k => k.Character);
+
+            int updatedCount = 0;
+            var notFoundItems = new List<string>();
+
+            // Update kanjis
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.Kanji))
+                    continue;
+
+                if (existingKanjiDict.TryGetValue(row.Kanji, out var kanjiEntity))
+                {
+                    bool hasUpdate = false;
+
+                    // Update HanViet if provided and currently null/empty
+                    if (!string.IsNullOrWhiteSpace(row.HanViet) && string.IsNullOrWhiteSpace(kanjiEntity.HanViet))
+                    {
+                        kanjiEntity.HanViet = row.HanViet.Trim();
+                        hasUpdate = true;
+                    }
+
+                    // Update MeaningVietnamese if provided and currently null/empty
+                    if (!string.IsNullOrWhiteSpace(row.Nghia) && string.IsNullOrWhiteSpace(kanjiEntity.MeaningVietnamese))
+                    {
+                        kanjiEntity.MeaningVietnamese = row.Nghia.Trim();
+                        hasUpdate = true;
+                    }
+
+                    if (hasUpdate)
+                    {
+                        kanjiEntity.UpdatedAt = DateTime.UtcNow;
+                        updatedCount++;
+                    }
+                }
+                else
+                {
+                    notFoundItems.Add(row.Kanji);
+                }
+            }
+
+            // Save changes
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new ImportResultDto
+            {
+                UpdatedCount = updatedCount,
+                NotFoundCount = notFoundItems.Count,
+                TotalProcessed = rows.Count,
+                NotFoundItems = notFoundItems,
+                Message = $"Đã cập nhật thành công {updatedCount} hán tự! {notFoundItems.Count} hán tự không tìm thấy trong database."
+            };
+        }
+
+        public async Task<ImportResultDto> ImportItemVietnameseAsync(Stream excelStream, CancellationToken cancellationToken = default)
+        {
+            // Read Excel data
+            var rows = excelStream.Query<ItemUpdateDto>().ToList();
+
+            if (!rows.Any())
+            {
+                return new ImportResultDto
+                {
+                    Message = "File Excel rỗng hoặc không có dữ liệu hợp lệ",
+                    TotalProcessed = 0
+                };
+            }
+
+            // Build query to find matching items
+            // Match by Japanese + Reading combination
+            var itemsQuery = _context.Items.AsQueryable();
+
+            int updatedCount = 0;
+            var notFoundItems = new List<string>();
+
+            // Process each row
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.Japanese))
+                    continue;
+
+                // Find matching item
+                var query = itemsQuery.Where(i => i.Japanese == row.Japanese);
+
+                // If Reading is provided, match by both Japanese and Reading
+                if (!string.IsNullOrWhiteSpace(row.Reading))
+                {
+                    query = query.Where(i => i.Reading == row.Reading);
+                }
+
+                var itemEntity = await query.FirstOrDefaultAsync(cancellationToken);
+
+                if (itemEntity != null)
+                {
+                    bool hasUpdate = false;
+
+                    // Update Romaji if provided and currently null/empty
+                    if (!string.IsNullOrWhiteSpace(row.Romaji) && string.IsNullOrWhiteSpace(itemEntity.Romaji))
+                    {
+                        itemEntity.Romaji = row.Romaji.Trim();
+                        hasUpdate = true;
+                    }
+
+                    // Update MeaningVietnamese if provided and currently null/empty
+                    if (!string.IsNullOrWhiteSpace(row.Nghia) && string.IsNullOrWhiteSpace(itemEntity.MeaningVietnamese))
+                    {
+                        itemEntity.MeaningVietnamese = row.Nghia.Trim();
+                        hasUpdate = true;
+                    }
+
+                    if (hasUpdate)
+                    {
+                        itemEntity.UpdatedAt = DateTime.UtcNow;
+                        updatedCount++;
+                    }
+                }
+                else
+                {
+                    var notFoundKey = string.IsNullOrWhiteSpace(row.Reading)
+                        ? row.Japanese
+                        : $"{row.Japanese} ({row.Reading})";
+                    notFoundItems.Add(notFoundKey);
+                }
+            }
+
+            // Save changes
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new ImportResultDto
+            {
+                UpdatedCount = updatedCount,
+                NotFoundCount = notFoundItems.Count,
+                TotalProcessed = rows.Count,
+                NotFoundItems = notFoundItems,
+                Message = $"Đã cập nhật thành công {updatedCount} từ vựng! {notFoundItems.Count} từ vựng không tìm thấy trong database."
+            };
         }
 
     }

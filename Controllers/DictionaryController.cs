@@ -568,6 +568,96 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         #endregion
+
+        #region Import
+
+        /// <summary>
+        /// Import Vietnamese data for Kanji from Excel file
+        /// </summary>
+        /// <param name="file">Excel file containing Kanji, HanViet, and Nghia columns</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Import result with updated count</returns>
+        [HttpPost("kanji/import-vietnamese")]
+        [SwaggerOperation(
+            Summary = "Import Vietnamese data for Kanji from Excel",
+            Description = "Upload an Excel file to update HanViet and MeaningVietnamese fields for existing Kanji. Only updates fields that are currently null/empty."
+        )]
+        [SwaggerResponse(200, "Import completed successfully", typeof(ImportResultDto))]
+        [SwaggerResponse(400, "Invalid file or empty file")]
+        [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
+        public async Task<ActionResult<ImportResultDto>> ImportKanjiVietnamese(
+            [FromForm] IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { error = "Vui lòng upload file Excel" });
+            }
+
+            // Validate file extension
+            var allowedExtensions = new[] { ".xlsx", ".xls" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new { error = "File phải là định dạng Excel (.xlsx hoặc .xls)" });
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await _dictionaryService.ImportKanjiVietnameseAsync(stream, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi xử lý file Excel", message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Import Vietnamese data for Items (vocabulary) from Excel file
+        /// </summary>
+        /// <param name="file">Excel file containing Japanese, Reading (optional), Romaji, and Nghia columns</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Import result with updated count</returns>
+        [HttpPost("items/import-vietnamese")]
+        [SwaggerOperation(
+            Summary = "Import Vietnamese data for Items from Excel",
+            Description = "Upload an Excel file to update Romaji and MeaningVietnamese fields for existing Items. Matches by Japanese + Reading combination. Only updates fields that are currently null/empty."
+        )]
+        [SwaggerResponse(200, "Import completed successfully", typeof(ImportResultDto))]
+        [SwaggerResponse(400, "Invalid file or empty file")]
+        [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
+        public async Task<ActionResult<ImportResultDto>> ImportItemVietnamese(
+            [FromForm] IFormFile file,
+            CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { error = "Vui lòng upload file Excel" });
+            }
+
+            // Validate file extension
+            var allowedExtensions = new[] { ".xlsx", ".xls" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new { error = "File phải là định dạng Excel (.xlsx hoặc .xls)" });
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await _dictionaryService.ImportItemVietnameseAsync(stream, cancellationToken);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi xử lý file Excel", message = ex.Message });
+            }
+        }
+
+        #endregion
     }
 }
 

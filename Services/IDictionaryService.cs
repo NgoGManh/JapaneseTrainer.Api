@@ -42,6 +42,10 @@ namespace JapaneseTrainer.Api.Services
         Task<AudioDto> CreateAudioAsync(CreateAudioRequest request, CancellationToken cancellationToken = default);
         Task<AudioDto?> UpdateAudioAsync(Guid id, CreateAudioRequest request, CancellationToken cancellationToken = default);
         Task<bool> DeleteAudioAsync(Guid id, CancellationToken cancellationToken = default);
+
+        // Import methods
+        Task<ImportResultDto> ImportKanjiVietnameseAsync(Stream excelStream, CancellationToken cancellationToken = default);
+        Task<ImportResultDto> ImportItemVietnameseAsync(Stream excelStream, CancellationToken cancellationToken = default);
     }
 }
 
