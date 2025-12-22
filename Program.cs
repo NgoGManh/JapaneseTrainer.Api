@@ -76,6 +76,9 @@ builder.Services.AddSwaggerGen(c =>
 
     // Add filter to show default values in Swagger for query parameters
     c.OperationFilter<SwaggerDefaultValueOperationFilter>();
+    
+    // Add filter to properly display file upload in Swagger UI
+    c.OperationFilter<SwaggerFileUploadOperationFilter>();
 });
 
 var jwtConfig = builder.Configuration.GetSection("Jwt");

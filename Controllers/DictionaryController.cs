@@ -574,7 +574,7 @@ namespace JapaneseTrainer.Api.Controllers
         /// <summary>
         /// Import Vietnamese data for Kanji from Excel file
         /// </summary>
-        /// <param name="file">Excel file containing Kanji, HanViet, and Nghia columns</param>
+        /// <param name="request">Request containing Excel file</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Import result with updated count</returns>
         [HttpPost("kanji/import-vietnamese")]
@@ -587,13 +587,15 @@ namespace JapaneseTrainer.Api.Controllers
         [SwaggerResponse(400, "Invalid file or empty file")]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
         public async Task<ActionResult<ImportResultDto>> ImportKanjiVietnamese(
-            [FromForm(Name = "file")] IFormFile file,
+            [FromForm] ImportKanjiFileRequest request,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
+            if (request?.File == null || request.File.Length == 0)
             {
                 return BadRequest(new { error = "Vui lòng upload file Excel" });
             }
+
+            var file = request.File;
 
             // Validate file extension
             var allowedExtensions = new[] { ".xlsx", ".xls" };
@@ -618,7 +620,7 @@ namespace JapaneseTrainer.Api.Controllers
         /// <summary>
         /// Import Vietnamese data for Items (vocabulary) from Excel file
         /// </summary>
-        /// <param name="file">Excel file containing Japanese, Reading (optional), Romaji, and Nghia columns</param>
+        /// <param name="request">Request containing Excel file</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Import result with updated count</returns>
         [HttpPost("items/import-vietnamese")]
@@ -631,13 +633,15 @@ namespace JapaneseTrainer.Api.Controllers
         [SwaggerResponse(400, "Invalid file or empty file")]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
         public async Task<ActionResult<ImportResultDto>> ImportItemVietnamese(
-            [FromForm(Name = "file")] IFormFile file,
+            [FromForm] ImportItemFileRequest request,
             CancellationToken cancellationToken)
         {
-            if (file == null || file.Length == 0)
+            if (request?.File == null || request.File.Length == 0)
             {
                 return BadRequest(new { error = "Vui lòng upload file Excel" });
             }
+
+            var file = request.File;
 
             // Validate file extension
             var allowedExtensions = new[] { ".xlsx", ".xls" };
