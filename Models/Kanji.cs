@@ -36,6 +36,7 @@ namespace JapaneseTrainer.Api.Models
 
         // Navigation properties
         public virtual ICollection<DictionaryEntry> DictionaryEntries { get; set; } = new List<DictionaryEntry>();
+        public virtual ICollection<LessonKanji> LessonKanjis { get; set; } = new List<LessonKanji>();
     }
 }
 

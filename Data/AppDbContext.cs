@@ -24,6 +24,7 @@ namespace JapaneseTrainer.Api.Data
         public DbSet<Lesson> Lessons => Set<Lesson>();
         public DbSet<LessonItem> LessonItems => Set<LessonItem>();
         public DbSet<LessonGrammar> LessonGrammars => Set<LessonGrammar>();
+        public DbSet<LessonKanji> LessonKanjis => Set<LessonKanji>();
         public DbSet<Exercise> Exercises => Set<Exercise>();
         public DbSet<StudyProgress> StudyProgresses => Set<StudyProgress>();
         public DbSet<ReviewSession> ReviewSessions => Set<ReviewSession>();
@@ -63,8 +64,29 @@ namespace JapaneseTrainer.Api.Data
             modelBuilder.Entity<LessonGrammar>()
                 .HasKey(lg => new { lg.LessonId, lg.GrammarMasterId });
 
+            modelBuilder.Entity<LessonKanji>()
+                .HasKey(lk => new { lk.LessonId, lk.KanjiId });
+
+            // StudyProgress: Use Id as primary key, with unique indexes for Item and Kanji
             modelBuilder.Entity<StudyProgress>()
-                .HasKey(sp => new { sp.UserId, sp.ItemId, sp.Skill });
+                .HasKey(sp => sp.Id);
+
+            modelBuilder.Entity<StudyProgress>()
+                .HasIndex(sp => new { sp.UserId, sp.ItemId, sp.Skill })
+                .IsUnique()
+                .HasFilter("[ItemId] IS NOT NULL AND [KanjiId] IS NULL")
+                .HasDatabaseName("IX_StudyProgress_User_Item_Skill");
+
+            modelBuilder.Entity<StudyProgress>()
+                .HasIndex(sp => new { sp.UserId, sp.KanjiId, sp.Skill })
+                .IsUnique()
+                .HasFilter("[KanjiId] IS NOT NULL AND [ItemId] IS NULL")
+                .HasDatabaseName("IX_StudyProgress_User_Kanji_Skill");
+
+            // Add check constraint: Either ItemId or KanjiId must be set, but not both
+            modelBuilder.Entity<StudyProgress>()
+                .HasCheckConstraint("CK_StudyProgress_ItemOrKanji", 
+                    "([ItemId] IS NOT NULL AND [KanjiId] IS NULL) OR ([ItemId] IS NULL AND [KanjiId] IS NOT NULL)");
 
             modelBuilder.Entity<UserDifficultItem>()
                 .HasKey(ud => new { ud.UserId, ud.ItemId });

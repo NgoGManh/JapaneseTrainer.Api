@@ -578,15 +578,16 @@ namespace JapaneseTrainer.Api.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Import result with updated count</returns>
         [HttpPost("kanji/import-vietnamese")]
+        [Consumes("multipart/form-data")]
         [SwaggerOperation(
             Summary = "Import Vietnamese data for Kanji from Excel",
-            Description = "Upload an Excel file to update HanViet and MeaningVietnamese fields for existing Kanji. Only updates fields that are currently null/empty."
+            Description = "Upload an Excel file to update HanViet and MeaningVietnamese fields for existing Kanji. Only updates fields that are currently null/empty. File format: Excel (.xlsx or .xls) with columns: Kanji, HanViet, Nghia"
         )]
         [SwaggerResponse(200, "Import completed successfully", typeof(ImportResultDto))]
         [SwaggerResponse(400, "Invalid file or empty file")]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
         public async Task<ActionResult<ImportResultDto>> ImportKanjiVietnamese(
-            [FromForm] IFormFile file,
+            [FromForm(Name = "file")] IFormFile file,
             CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
@@ -621,15 +622,16 @@ namespace JapaneseTrainer.Api.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Import result with updated count</returns>
         [HttpPost("items/import-vietnamese")]
+        [Consumes("multipart/form-data")]
         [SwaggerOperation(
             Summary = "Import Vietnamese data for Items from Excel",
-            Description = "Upload an Excel file to update Romaji and MeaningVietnamese fields for existing Items. Matches by Japanese + Reading combination. Only updates fields that are currently null/empty."
+            Description = "Upload an Excel file to update Romaji and MeaningVietnamese fields for existing Items. Matches by Japanese + Reading combination. Only updates fields that are currently null/empty. File format: Excel (.xlsx or .xls) with columns: Japanese, Reading (optional), Romaji, Nghia"
         )]
         [SwaggerResponse(200, "Import completed successfully", typeof(ImportResultDto))]
         [SwaggerResponse(400, "Invalid file or empty file")]
         [SwaggerResponse(401, "Unauthorized - Invalid or missing token")]
         public async Task<ActionResult<ImportResultDto>> ImportItemVietnamese(
-            [FromForm] IFormFile file,
+            [FromForm(Name = "file")] IFormFile file,
             CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)

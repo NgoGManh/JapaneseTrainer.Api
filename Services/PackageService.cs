@@ -60,6 +60,8 @@ namespace JapaneseTrainer.Api.Services
                     .ThenInclude(l => l.LessonItems)
                 .Include(p => p.Lessons)
                     .ThenInclude(l => l.LessonGrammars)
+                .Include(p => p.Lessons)
+                    .ThenInclude(l => l.LessonKanjis)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.Search))
@@ -96,6 +98,7 @@ namespace JapaneseTrainer.Api.Services
             var package = await _context.Packages
                 .Include(p => p.Lessons).ThenInclude(l => l.LessonItems)
                 .Include(p => p.Lessons).ThenInclude(l => l.LessonGrammars)
+                .Include(p => p.Lessons).ThenInclude(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
             return package == null ? null : MapPackageWithLessons(package);
@@ -126,6 +129,7 @@ namespace JapaneseTrainer.Api.Services
             var package = await _context.Packages
                 .Include(p => p.Lessons).ThenInclude(l => l.LessonItems)
                 .Include(p => p.Lessons).ThenInclude(l => l.LessonGrammars)
+                .Include(p => p.Lessons).ThenInclude(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
             if (package == null)
@@ -182,6 +186,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
 
             return lesson == null ? null : MapLessonDto(lesson);
@@ -209,7 +214,68 @@ namespace JapaneseTrainer.Api.Services
             await _context.Lessons.AddAsync(lesson, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return MapLessonDto(lesson);
+            // Add Items if provided
+            if (request.ItemIds != null && request.ItemIds.Any())
+            {
+                var validItemIds = await _context.Items
+                    .Where(i => request.ItemIds.Contains(i.Id))
+                    .Select(i => i.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var itemId in validItemIds)
+                {
+                    lesson.LessonItems.Add(new LessonItem
+                    {
+                        LessonId = lesson.Id,
+                        ItemId = itemId
+                    });
+                }
+            }
+
+            // Add Grammars if provided
+            if (request.GrammarMasterIds != null && request.GrammarMasterIds.Any())
+            {
+                var validGrammarIds = await _context.GrammarMasters
+                    .Where(g => request.GrammarMasterIds.Contains(g.Id))
+                    .Select(g => g.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var grammarId in validGrammarIds)
+                {
+                    lesson.LessonGrammars.Add(new LessonGrammar
+                    {
+                        LessonId = lesson.Id,
+                        GrammarMasterId = grammarId
+                    });
+                }
+            }
+
+            // Add Kanjis if provided
+            if (request.KanjiIds != null && request.KanjiIds.Any())
+            {
+                var validKanjiIds = await _context.Kanjis
+                    .Where(k => request.KanjiIds.Contains(k.Id))
+                    .Select(k => k.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var kanjiId in validKanjiIds)
+                {
+                    lesson.LessonKanjis.Add(new LessonKanji
+                    {
+                        LessonId = lesson.Id,
+                        KanjiId = kanjiId
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Reload with includes
+            return MapLessonDto(await _context.Lessons
+                .Include(l => l.LessonItems)
+                .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
+                .FirstAsync(l => l.Id == lesson.Id, cancellationToken));
         }
 
         public async Task<LessonDto?> UpdateLessonAsync(Guid id, UpdateLessonRequest request, CancellationToken cancellationToken = default)
@@ -217,6 +283,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
 
             if (lesson == null)
@@ -228,6 +295,81 @@ namespace JapaneseTrainer.Api.Services
             lesson.Description = request.Description;
             lesson.Order = request.Order;
             lesson.UpdatedAt = DateTime.UtcNow;
+
+            // Update Items if provided
+            if (request.ItemIds != null)
+            {
+                // Remove all existing items
+                _context.LessonItems.RemoveRange(lesson.LessonItems);
+                
+                // Add new items
+                if (request.ItemIds.Any())
+                {
+                    var validItemIds = await _context.Items
+                        .Where(i => request.ItemIds.Contains(i.Id))
+                        .Select(i => i.Id)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var itemId in validItemIds)
+                    {
+                        lesson.LessonItems.Add(new LessonItem
+                        {
+                            LessonId = lesson.Id,
+                            ItemId = itemId
+                        });
+                    }
+                }
+            }
+
+            // Update Grammars if provided
+            if (request.GrammarMasterIds != null)
+            {
+                // Remove all existing grammars
+                _context.LessonGrammars.RemoveRange(lesson.LessonGrammars);
+                
+                // Add new grammars
+                if (request.GrammarMasterIds.Any())
+                {
+                    var validGrammarIds = await _context.GrammarMasters
+                        .Where(g => request.GrammarMasterIds.Contains(g.Id))
+                        .Select(g => g.Id)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var grammarId in validGrammarIds)
+                    {
+                        lesson.LessonGrammars.Add(new LessonGrammar
+                        {
+                            LessonId = lesson.Id,
+                            GrammarMasterId = grammarId
+                        });
+                    }
+                }
+            }
+
+            // Update Kanjis if provided
+            if (request.KanjiIds != null)
+            {
+                // Remove all existing kanjis
+                _context.LessonKanjis.RemoveRange(lesson.LessonKanjis);
+                
+                // Add new kanjis
+                if (request.KanjiIds.Any())
+                {
+                    var validKanjiIds = await _context.Kanjis
+                        .Where(k => request.KanjiIds.Contains(k.Id))
+                        .Select(k => k.Id)
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var kanjiId in validKanjiIds)
+                    {
+                        lesson.LessonKanjis.Add(new LessonKanji
+                        {
+                            LessonId = lesson.Id,
+                            KanjiId = kanjiId
+                        });
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -258,6 +400,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
 
             if (lesson == null)
@@ -285,6 +428,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
 
             if (lesson == null)
@@ -307,6 +451,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
 
             if (lesson == null)
@@ -348,6 +493,7 @@ namespace JapaneseTrainer.Api.Services
             var lesson = await _context.Lessons
                 .Include(l => l.LessonItems)
                 .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
                 .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
 
             if (lesson == null)
@@ -365,6 +511,63 @@ namespace JapaneseTrainer.Api.Services
             return MapLessonDto(lesson);
         }
 
+        public async Task<LessonDto?> AddLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default)
+        {
+            var lesson = await _context.Lessons
+                .Include(l => l.LessonItems)
+                .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
+                .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
+
+            if (lesson == null)
+            {
+                return null;
+            }
+
+            // Check if kanji exists
+            var kanjiExists = await _context.Kanjis.AnyAsync(k => k.Id == kanjiId, cancellationToken);
+            if (!kanjiExists)
+            {
+                throw new InvalidOperationException("Kanji not found");
+            }
+
+            // Check if already added
+            if (!lesson.LessonKanjis.Any(lk => lk.KanjiId == kanjiId))
+            {
+                lesson.LessonKanjis.Add(new LessonKanji
+                {
+                    LessonId = lessonId,
+                    KanjiId = kanjiId
+                });
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            return MapLessonDto(lesson);
+        }
+
+        public async Task<LessonDto?> RemoveLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default)
+        {
+            var lesson = await _context.Lessons
+                .Include(l => l.LessonItems)
+                .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
+                .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
+
+            if (lesson == null)
+            {
+                return null;
+            }
+
+            var toRemove = lesson.LessonKanjis.FirstOrDefault(lk => lk.KanjiId == kanjiId);
+            if (toRemove != null)
+            {
+                lesson.LessonKanjis.Remove(toRemove);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            return MapLessonDto(lesson);
+        }
+
         #endregion
 
         #region Helpers
@@ -374,6 +577,7 @@ namespace JapaneseTrainer.Api.Services
             var dto = _mapper.Map<LessonDto>(lesson);
             dto.ItemIds = lesson.LessonItems.Select(li => li.ItemId).ToList();
             dto.GrammarMasterIds = lesson.LessonGrammars.Select(lg => lg.GrammarMasterId).ToList();
+            dto.KanjiIds = lesson.LessonKanjis.Select(lk => lk.KanjiId).ToList();
             return dto;
         }
 

@@ -12,5 +12,6 @@ namespace JapaneseTrainer.Api.DTOs.Packages
 
         public List<Guid> ItemIds { get; set; } = new();
         public List<Guid> GrammarMasterIds { get; set; } = new();
+        public List<Guid> KanjiIds { get; set; } = new();
     }
 }

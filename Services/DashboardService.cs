@@ -74,16 +74,18 @@ namespace JapaneseTrainer.Api.Services
                 .Take(20)
                 .ToListAsync(cancellationToken);
 
-            // Map outputs
-            var srsToday = dueToday.Select(sp => new StudyQueueItemShortDto
-            {
-                ItemId = sp.ItemId,
-                Japanese = sp.Item.Japanese,
-                Meaning = sp.Item.Meaning,
-                Skill = sp.Skill,
-                Stage = sp.Stage,
-                NextReviewAt = sp.NextReviewAt
-            }).ToList();
+            // Map outputs - only include Items (not Kanjis) for dashboard
+            var srsToday = dueToday
+                .Where(sp => sp.ItemId.HasValue && sp.Item != null)
+                .Select(sp => new StudyQueueItemShortDto
+                {
+                    ItemId = sp.ItemId!.Value,
+                    Japanese = sp.Item!.Japanese,
+                    Meaning = sp.Item.Meaning,
+                    Skill = sp.Skill,
+                    Stage = sp.Stage,
+                    NextReviewAt = sp.NextReviewAt
+                }).ToList();
 
             var difficultDtos = new List<DifficultItemDto>();
             foreach (var d in difficult)

@@ -28,6 +28,7 @@ namespace JapaneseTrainer.Api.Models
 
         public ICollection<LessonItem> LessonItems { get; set; } = new List<LessonItem>();
         public ICollection<LessonGrammar> LessonGrammars { get; set; } = new List<LessonGrammar>();
+        public ICollection<LessonKanji> LessonKanjis { get; set; } = new List<LessonKanji>();
     }
 }
 

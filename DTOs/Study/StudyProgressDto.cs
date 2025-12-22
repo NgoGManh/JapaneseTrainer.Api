@@ -4,7 +4,10 @@ namespace JapaneseTrainer.Api.DTOs.Study
 {
     public class StudyProgressDto
     {
-        public Guid ItemId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? ItemId { get; set; }
+        public Guid? KanjiId { get; set; }
+        public string Type { get; set; } = "Item";
         public LearningSkill Skill { get; set; }
         public int Stage { get; set; }
         public DateTime? LastReviewedAt { get; set; }

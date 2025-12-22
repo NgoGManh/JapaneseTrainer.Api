@@ -5,15 +5,24 @@ using JapaneseTrainer.Api.Models.Enums;
 namespace JapaneseTrainer.Api.Models
 {
     /// <summary>
-    /// Trạng thái SRS của một Item theo Skill cho từng User
+    /// Trạng thái SRS của một Item hoặc Kanji theo Skill cho từng User
     /// </summary>
     public class StudyProgress : AuditableEntity
     {
+        public Guid Id { get; set; }
+
         [Required]
         public Guid UserId { get; set; }
 
-        [Required]
-        public Guid ItemId { get; set; }
+        /// <summary>
+        /// Item ID (for vocabulary study). One of ItemId or KanjiId must be set.
+        /// </summary>
+        public Guid? ItemId { get; set; }
+
+        /// <summary>
+        /// Kanji ID (for kanji study). One of ItemId or KanjiId must be set.
+        /// </summary>
+        public Guid? KanjiId { get; set; }
 
         [Required]
         public LearningSkill Skill { get; set; }
@@ -28,7 +37,10 @@ namespace JapaneseTrainer.Api.Models
 
         // Navigation
         [ForeignKey(nameof(ItemId))]
-        public Item Item { get; set; } = null!;
+        public Item? Item { get; set; }
+
+        [ForeignKey(nameof(KanjiId))]
+        public Kanji? Kanji { get; set; }
     }
 }
 

@@ -33,6 +33,46 @@ namespace JapaneseTrainer.Api.Controllers
             return Ok(queue);
         }
 
+        [HttpPost("queue/by-lessons")]
+        [SwaggerOperation(
+            Summary = "Get review queue from specific lessons",
+            Description = "Return due items/kanjis from one or multiple lessons. Supports studying multiple lessons at once for flashcard mode."
+        )]
+        [SwaggerResponse(200, "Queue returned", typeof(List<StudyQueueItemDto>))]
+        [SwaggerResponse(400, "Invalid request")]
+        public async Task<ActionResult<List<StudyQueueItemDto>>> GetQueueByLessons(
+            [FromBody] GetQueueByLessonsRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var userId = GetUserId();
+            var queue = await _studyService.GetQueueByLessonsAsync(userId, request, cancellationToken);
+            return Ok(queue);
+        }
+
+        [HttpPost("queue/by-package")]
+        [SwaggerOperation(
+            Summary = "Get review queue from a package",
+            Description = "Return due items/kanjis from all lessons in a package, or specific lessons if LessonIds provided. This is the recommended flow: choose Package -> choose Lessons -> study."
+        )]
+        [SwaggerResponse(200, "Queue returned", typeof(List<StudyQueueItemDto>))]
+        [SwaggerResponse(400, "Invalid request")]
+        [SwaggerResponse(404, "Package not found")]
+        public async Task<ActionResult<List<StudyQueueItemDto>>> GetQueueByPackage(
+            [FromBody] GetQueueByPackageRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var userId = GetUserId();
+                var queue = await _studyService.GetQueueByPackageAsync(userId, request, cancellationToken);
+                return Ok(queue);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("answer")]
         [SwaggerOperation(Summary = "Submit study answer", Description = "Update SRS progress for an item.")]
         [SwaggerResponse(200, "Progress updated", typeof(StudyProgressDto))]

@@ -271,5 +271,53 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         #endregion
+
+        #region Lesson Kanji
+
+        [HttpPost("lessons/{id:guid}/kanjis")]
+        [SwaggerOperation(Summary = "Add kanji to lesson")]
+        [SwaggerResponse(200, "Kanji added", typeof(LessonDto))]
+        [SwaggerResponse(400, "Invalid request")]
+        [SwaggerResponse(404, "Lesson not found")]
+        public async Task<ActionResult<LessonDto>> AddLessonKanji(
+            Guid id,
+            [FromBody] AddLessonKanjiRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var lesson = await _packageService.AddLessonKanjiAsync(id, request.KanjiId, cancellationToken);
+                if (lesson == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(lesson);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("lessons/{lessonId:guid}/kanjis/{kanjiId:guid}")]
+        [SwaggerOperation(Summary = "Remove kanji from lesson")]
+        [SwaggerResponse(200, "Kanji removed", typeof(LessonDto))]
+        [SwaggerResponse(404, "Lesson not found")]
+        public async Task<ActionResult<LessonDto>> RemoveLessonKanji(
+            Guid lessonId,
+            Guid kanjiId,
+            CancellationToken cancellationToken)
+        {
+            var lesson = await _packageService.RemoveLessonKanjiAsync(lessonId, kanjiId, cancellationToken);
+            if (lesson == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(lesson);
+        }
+
+        #endregion
     }
 }

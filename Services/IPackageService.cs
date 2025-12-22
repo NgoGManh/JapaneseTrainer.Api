@@ -27,5 +27,9 @@ namespace JapaneseTrainer.Api.Services
         // Lesson - Grammar
         Task<LessonDto?> AddLessonGrammarAsync(Guid lessonId, Guid grammarMasterId, Guid? grammarPackageId, CancellationToken cancellationToken = default);
         Task<LessonDto?> RemoveLessonGrammarAsync(Guid lessonId, Guid grammarMasterId, CancellationToken cancellationToken = default);
+
+        // Lesson - Kanji
+        Task<LessonDto?> AddLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default);
+        Task<LessonDto?> RemoveLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default);
     }
 }

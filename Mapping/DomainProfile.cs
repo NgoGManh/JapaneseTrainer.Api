@@ -51,7 +51,9 @@ namespace JapaneseTrainer.Api.Mapping
             CreateMap<Exercise, ExerciseDto>();
 
             // Study / SRS
-            CreateMap<StudyProgress, StudyProgressDto>();
+            CreateMap<StudyProgress, StudyProgressDto>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => 
+                    src.ItemId.HasValue ? "Item" : "Kanji"));
             CreateMap<ReviewSession, ReviewSessionDto>();
 
             // Community

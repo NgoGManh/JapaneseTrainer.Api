@@ -5,8 +5,15 @@ namespace JapaneseTrainer.Api.DTOs.Study
 {
     public class StudyAnswerRequest
     {
-        [Required]
-        public Guid ItemId { get; set; }
+        /// <summary>
+        /// Item ID (for vocabulary study). One of ItemId or KanjiId must be set.
+        /// </summary>
+        public Guid? ItemId { get; set; }
+
+        /// <summary>
+        /// Kanji ID (for kanji study). One of ItemId or KanjiId must be set.
+        /// </summary>
+        public Guid? KanjiId { get; set; }
 
         [Required]
         public LearningSkill Skill { get; set; }
