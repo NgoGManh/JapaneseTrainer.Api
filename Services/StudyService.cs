@@ -100,6 +100,9 @@ namespace JapaneseTrainer.Api.Services
                 .Where(l => request.LessonIds.Contains(l.Id))
                 .ToListAsync(cancellationToken);
 
+            // Helper to pick skill for initial seed (default Read if not specified)
+            LearningSkill GetSeedSkill() => request.Skill ?? LearningSkill.Read;
+
             // Process Items if requested
             if (request.IncludeItems)
             {
@@ -111,6 +114,31 @@ namespace JapaneseTrainer.Api.Services
 
                 if (itemIds.Any())
                 {
+                    // Seed StudyProgress for missing items so queue không rỗng
+                    var existingItemIds = await _context.StudyProgresses
+                        .Where(sp => sp.UserId == userId && sp.ItemId.HasValue && itemIds.Contains(sp.ItemId.Value))
+                        .Select(sp => sp.ItemId!.Value)
+                        .ToListAsync(cancellationToken);
+
+                    var missingItemIds = itemIds.Except(existingItemIds).ToList();
+                    if (missingItemIds.Any())
+                    {
+                        foreach (var itemId in missingItemIds)
+                        {
+                            await _context.StudyProgresses.AddAsync(new StudyProgress
+                            {
+                                Id = Guid.NewGuid(),
+                                UserId = userId,
+                                ItemId = itemId,
+                                KanjiId = null,
+                                Skill = GetSeedSkill(),
+                                Stage = 0,
+                                CreatedAt = now,
+                                NextReviewAt = null
+                            }, cancellationToken);
+                        }
+                    }
+
                     var query = _context.StudyProgresses
                         .Include(sp => sp.Item)
                         .Where(sp => sp.UserId == userId && sp.ItemId.HasValue && itemIds.Contains(sp.ItemId.Value));
@@ -152,6 +180,31 @@ namespace JapaneseTrainer.Api.Services
 
                 if (kanjiIds.Any())
                 {
+                    // Seed StudyProgress cho kanji còn thiếu
+                    var existingKanjiIds = await _context.StudyProgresses
+                        .Where(sp => sp.UserId == userId && sp.KanjiId.HasValue && kanjiIds.Contains(sp.KanjiId.Value))
+                        .Select(sp => sp.KanjiId!.Value)
+                        .ToListAsync(cancellationToken);
+
+                    var missingKanjiIds = kanjiIds.Except(existingKanjiIds).ToList();
+                    if (missingKanjiIds.Any())
+                    {
+                        foreach (var kanjiId in missingKanjiIds)
+                        {
+                            await _context.StudyProgresses.AddAsync(new StudyProgress
+                            {
+                                Id = Guid.NewGuid(),
+                                UserId = userId,
+                                ItemId = null,
+                                KanjiId = kanjiId,
+                                Skill = GetSeedSkill(),
+                                Stage = 0,
+                                CreatedAt = now,
+                                NextReviewAt = null
+                            }, cancellationToken);
+                        }
+                    }
+
                     var query = _context.StudyProgresses
                         .Include(sp => sp.Kanji)
                         .Where(sp => sp.UserId == userId && sp.KanjiId.HasValue && kanjiIds.Contains(sp.KanjiId.Value));
