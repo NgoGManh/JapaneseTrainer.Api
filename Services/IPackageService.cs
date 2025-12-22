@@ -31,5 +31,8 @@ namespace JapaneseTrainer.Api.Services
         // Lesson - Kanji
         Task<LessonDto?> AddLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default);
         Task<LessonDto?> RemoveLessonKanjiAsync(Guid lessonId, Guid kanjiId, CancellationToken cancellationToken = default);
+
+        // Lesson - Import
+        Task<LessonImportResultDto> ImportLessonContentAsync(Guid lessonId, Stream excelStream, CancellationToken cancellationToken = default);
     }
 }

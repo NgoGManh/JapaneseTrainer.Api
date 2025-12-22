@@ -5,6 +5,8 @@ using JapaneseTrainer.Api.DTOs.Common;
 using JapaneseTrainer.Api.DTOs.Packages;
 using JapaneseTrainer.Api.Helpers;
 using JapaneseTrainer.Api.Models;
+using JapaneseTrainer.Api.Models.Import;
+using MiniExcelLibs;
 
 namespace JapaneseTrainer.Api.Services
 {
@@ -566,6 +568,204 @@ namespace JapaneseTrainer.Api.Services
             }
 
             return MapLessonDto(lesson);
+        }
+
+        public async Task<LessonImportResultDto> ImportLessonContentAsync(Guid lessonId, Stream excelStream, CancellationToken cancellationToken = default)
+        {
+            // Check if lesson exists
+            var lesson = await _context.Lessons
+                .Include(l => l.LessonItems)
+                .Include(l => l.LessonGrammars)
+                .Include(l => l.LessonKanjis)
+                .FirstOrDefaultAsync(l => l.Id == lessonId, cancellationToken);
+
+            if (lesson == null)
+            {
+                throw new InvalidOperationException("Lesson not found");
+            }
+
+            // Read Excel data
+            var rows = excelStream.Query<LessonContentImportDto>().ToList();
+
+            if (!rows.Any())
+            {
+                return new LessonImportResultDto
+                {
+                    Message = "File Excel rỗng hoặc không có dữ liệu hợp lệ",
+                    TotalProcessed = 0
+                };
+            }
+
+            var result = new LessonImportResultDto
+            {
+                TotalProcessed = rows.Count
+            };
+
+            // Process each row
+            foreach (var row in rows)
+            {
+                var type = (row.Type ?? string.Empty).Trim();
+                
+                if (string.IsNullOrWhiteSpace(type))
+                    continue;
+
+                switch (type.ToLower())
+                {
+                    case "item":
+                        await ProcessItemImport(row, lesson, result, cancellationToken);
+                        break;
+                    case "kanji":
+                        await ProcessKanjiImport(row, lesson, result, cancellationToken);
+                        break;
+                    case "grammar":
+                        await ProcessGrammarImport(row, lesson, result, cancellationToken);
+                        break;
+                }
+            }
+
+            // Save all changes
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Build message
+            var addedCount = result.ItemsAdded + result.KanjisAdded + result.GrammarsAdded;
+            var notFoundCount = result.ItemsNotFound + result.KanjisNotFound + result.GrammarsNotFound;
+            var alreadyExistsCount = result.ItemsAlreadyExists + result.KanjisAlreadyExists + result.GrammarsAlreadyExists;
+            
+            result.Message = $"Đã thêm thành công {addedCount} mục vào bài học! " +
+                           $"{notFoundCount} mục không tìm thấy trong database. " +
+                           $"{alreadyExistsCount} mục đã tồn tại trong bài học.";
+
+            return result;
+        }
+
+        private async Task ProcessItemImport(
+            LessonContentImportDto row,
+            Lesson lesson,
+            LessonImportResultDto result,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(row.Japanese))
+            {
+                result.ItemsNotFound++;
+                result.NotFoundItems.Add("(Japanese trống)");
+                return;
+            }
+
+            // Find matching item
+            var query = _context.Items.Where(i => i.Japanese == row.Japanese.Trim());
+
+            // If Reading is provided, match by both Japanese and Reading
+            if (!string.IsNullOrWhiteSpace(row.Reading))
+            {
+                query = query.Where(i => i.Reading == row.Reading.Trim());
+            }
+
+            var item = await query.FirstOrDefaultAsync(cancellationToken);
+
+            if (item == null)
+            {
+                var notFoundKey = string.IsNullOrWhiteSpace(row.Reading)
+                    ? row.Japanese
+                    : $"{row.Japanese} ({row.Reading})";
+                result.ItemsNotFound++;
+                result.NotFoundItems.Add(notFoundKey);
+                return;
+            }
+
+            // Check if already exists in lesson
+            if (lesson.LessonItems.Any(li => li.ItemId == item.Id))
+            {
+                result.ItemsAlreadyExists++;
+                return;
+            }
+
+            // Add to lesson
+            lesson.LessonItems.Add(new LessonItem
+            {
+                LessonId = lesson.Id,
+                ItemId = item.Id
+            });
+            result.ItemsAdded++;
+        }
+
+        private async Task ProcessKanjiImport(
+            LessonContentImportDto row,
+            Lesson lesson,
+            LessonImportResultDto result,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(row.Character))
+            {
+                result.KanjisNotFound++;
+                result.NotFoundKanjis.Add("(Character trống)");
+                return;
+            }
+
+            // Find matching kanji
+            var kanji = await _context.Kanjis
+                .FirstOrDefaultAsync(k => k.Character == row.Character.Trim(), cancellationToken);
+
+            if (kanji == null)
+            {
+                result.KanjisNotFound++;
+                result.NotFoundKanjis.Add(row.Character);
+                return;
+            }
+
+            // Check if already exists in lesson
+            if (lesson.LessonKanjis.Any(lk => lk.KanjiId == kanji.Id))
+            {
+                result.KanjisAlreadyExists++;
+                return;
+            }
+
+            // Add to lesson
+            lesson.LessonKanjis.Add(new LessonKanji
+            {
+                LessonId = lesson.Id,
+                KanjiId = kanji.Id
+            });
+            result.KanjisAdded++;
+        }
+
+        private async Task ProcessGrammarImport(
+            LessonContentImportDto row,
+            Lesson lesson,
+            LessonImportResultDto result,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(row.Title))
+            {
+                result.GrammarsNotFound++;
+                result.NotFoundGrammars.Add("(Title trống)");
+                return;
+            }
+
+            // Find matching grammar
+            var grammar = await _context.GrammarMasters
+                .FirstOrDefaultAsync(g => g.Title == row.Title.Trim(), cancellationToken);
+
+            if (grammar == null)
+            {
+                result.GrammarsNotFound++;
+                result.NotFoundGrammars.Add(row.Title);
+                return;
+            }
+
+            // Check if already exists in lesson
+            if (lesson.LessonGrammars.Any(lg => lg.GrammarMasterId == grammar.Id))
+            {
+                result.GrammarsAlreadyExists++;
+                return;
+            }
+
+            // Add to lesson
+            lesson.LessonGrammars.Add(new LessonGrammar
+            {
+                LessonId = lesson.Id,
+                GrammarMasterId = grammar.Id
+            });
+            result.GrammarsAdded++;
         }
 
         #endregion

@@ -319,5 +319,48 @@ namespace JapaneseTrainer.Api.Controllers
         }
 
         #endregion
+
+        #region Lesson Import
+
+        [HttpPost("lessons/{id:guid}/import")]
+        [Consumes("multipart/form-data")]
+        [SwaggerOperation(Summary = "Import lesson content from Excel", Description = "Import Items, Kanjis, and Grammars to a lesson from Excel file. Excel columns: Type (Item/Kanji/Grammar), Japanese (for Item), Reading (optional for Item), Character (for Kanji), Title (for Grammar)")]
+        [SwaggerResponse(200, "Import completed", typeof(LessonImportResultDto))]
+        [SwaggerResponse(400, "Invalid request")]
+        [SwaggerResponse(404, "Lesson not found")]
+        public async Task<ActionResult<LessonImportResultDto>> ImportLessonContent(
+            Guid id,
+            [FromForm] ImportLessonContentFileRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (request.File == null || request.File.Length == 0)
+                {
+                    return BadRequest(new { message = "File không được để trống" });
+                }
+
+                // Validate file extension
+                var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+                if (extension != ".xlsx" && extension != ".xls")
+                {
+                    return BadRequest(new { message = "Chỉ chấp nhận file Excel (.xlsx, .xls)" });
+                }
+
+                using var stream = request.File.OpenReadStream();
+                var result = await _packageService.ImportLessonContentAsync(id, stream, cancellationToken);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Lỗi khi import: {ex.Message}" });
+            }
+        }
+
+        #endregion
     }
 }
