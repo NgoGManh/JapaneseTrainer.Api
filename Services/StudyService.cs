@@ -137,6 +137,7 @@ namespace JapaneseTrainer.Api.Services
                                 NextReviewAt = null
                             }, cancellationToken);
                         }
+                        await _context.SaveChangesAsync(cancellationToken); // Save để query lại có data
                     }
 
                     var query = _context.StudyProgresses
@@ -203,6 +204,7 @@ namespace JapaneseTrainer.Api.Services
                                 NextReviewAt = null
                             }, cancellationToken);
                         }
+                        await _context.SaveChangesAsync(cancellationToken); // Save để query lại có data
                     }
 
                     var query = _context.StudyProgresses
